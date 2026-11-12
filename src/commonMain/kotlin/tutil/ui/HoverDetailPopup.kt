@@ -322,7 +322,7 @@ object LatchedTipEscape {
  * heading for a card at [card]: the move is mostly horizontal, and in the card's direction. Pure,
  * for the test.
  */
-internal fun isHeadingToward(exit: Offset, velocity: Offset, card: IntRect, horizontalOnly: Boolean = true): Boolean {
+fun isHeadingToward(exit: Offset, velocity: Offset, card: IntRect, horizontalOnly: Boolean = true): Boolean {
     if (velocity == Offset.Zero) return false
     val cardCenterX = (card.left + card.right) / 2f
     if (horizontalOnly) {

@@ -469,7 +469,7 @@ fun TooltipCard(
 
 /** Surface tokens for Family B/C hover cards and the matching always-visible [UsStateHoverCard]. */
 @Composable
-internal fun TooltipCardSurface(
+fun TooltipCardSurface(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surface,
     borderColor: Color = MaterialTheme.colorScheme.outline,

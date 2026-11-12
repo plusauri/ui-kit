@@ -10,6 +10,7 @@
 
 package tutil.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -27,12 +28,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import tutil.ui.i18n.LocalAppStrings
 
 /**
  * Best-effort text clipboard write. Returns `false` when the platform rejects the write
@@ -55,7 +56,7 @@ fun trySetClipboardText(clipboard: ClipboardManager, text: String): Boolean =
  * can drop a copy button onto its header row.
  *
  * Styling deliberately mirrors `TableCopyButton`: a [ToolbarIconButtonSize] cell (min-interactive-size
- * relaxed so it hugs the icon), a [ToolbarPlateIconSize] [BrandedTableCopyIcon], and the same 1200ms
+ * relaxed so it hugs the icon), a [ToolbarPlateIconSize] [LocalCopyGlyph], and the same 1200ms
  * check-swap feedback, so copy affordances read as one family wherever they appear.
  *
  * @param textToCopy computed lazily on click, so callers can assemble the payload (often Markdown)
@@ -67,8 +68,8 @@ fun trySetClipboardText(clipboard: ClipboardManager, text: String): Boolean =
 fun CopyIconButton(
     textToCopy: () -> String,
     modifier: Modifier = Modifier,
-    contentDescription: String = LocalAppStrings.current.table.copy,
-    copiedDescription: String = LocalAppStrings.current.table.copied,
+    contentDescription: String = LocalCopyWords.current.copy,
+    copiedDescription: String = LocalCopyWords.current.copied,
     @Suppress("UNUSED_PARAMETER") contentColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     /** Told after a **successful** copy — for a host whose next step follows it (close a menu). */
     onCopied: () -> Unit = {},
@@ -87,7 +88,7 @@ fun CopyIconButton(
         showCheck = false
     }
 
-    val tip = LocalAppStrings.current.table.copyContentHint
+    val tip = LocalCopyWords.current.hint
     HoverTooltip(tip, modifier = modifier) {
         ToolbarPlateIconButton(
             onClick = {
@@ -105,8 +106,10 @@ fun CopyIconButton(
                     modifier = Modifier.size(18.dp),
                 )
             } else {
-                BrandedTableCopyIcon(
+                Image(
+                    imageVector = LocalCopyGlyph.current,
                     contentDescription = contentDescription,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier.size(ToolbarPlateIconSize),
                 )
             }

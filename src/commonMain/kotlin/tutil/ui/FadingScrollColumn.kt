@@ -56,7 +56,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import tutil.ui.i18n.LocalAppStrings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -177,7 +176,7 @@ fun FadingScrollColumn(
  * fade said the panel went on, and nothing said how far or let him grab it.
  */
 @Composable
-internal fun RailPanelScrollColumn(
+fun RailPanelScrollColumn(
     modifier: Modifier = Modifier,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     content: @Composable ColumnScope.() -> Unit,
@@ -202,7 +201,7 @@ internal fun RailPanelScrollColumn(
  * same gutter ([RailPanelScrollColumn]), the dossier pane and hover cards have padding for it.
  */
 @Composable
-internal fun ScrollbarBox(
+fun ScrollbarBox(
     scrollState: ScrollState,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
@@ -220,7 +219,7 @@ internal fun ScrollbarBox(
  */
 @Composable
 private fun BoxScope.ScrollCueButtons(scrollState: ScrollState, showDown: Boolean, showUp: Boolean) {
-    val strings = LocalAppStrings.current.common
+    val words = LocalScrollCueWords.current
     val scope = rememberCoroutineScope()
     fun page(direction: Float) {
         val viewport = scrollState.viewportSize.takeIf { it > 0 } ?: return
@@ -228,21 +227,21 @@ private fun BoxScope.ScrollCueButtons(scrollState: ScrollState, showDown: Boolea
     }
     if (showDown && scrollState.canScrollForward) {
         TipIconButton(
-            tip = strings.scrollDown,
+            tip = words.down,
             onClick = { page(1f) },
             size = SCROLL_CUE_HIT_SIZE,
             // The mark is drawn, not an Icon, so the button carries the name itself.
-            buttonModifier = Modifier.semantics { contentDescription = strings.scrollDown },
+            buttonModifier = Modifier.semantics { contentDescription = words.down },
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = SCROLL_CUE_HIT_INSET),
         ) {}
     }
     if (showUp && scrollState.canScrollBackward) {
         TipIconButton(
-            tip = strings.scrollUp,
+            tip = words.up,
             onClick = { page(-1f) },
             size = SCROLL_CUE_HIT_SIZE,
             // The mark is drawn, not an Icon, so the button carries the name itself.
-            buttonModifier = Modifier.semantics { contentDescription = strings.scrollUp },
+            buttonModifier = Modifier.semantics { contentDescription = words.up },
             modifier = Modifier.align(Alignment.TopCenter).padding(top = SCROLL_CUE_HIT_INSET),
         ) {}
     }
@@ -279,7 +278,7 @@ private fun DrawScope.drawTopChevron(cueColor: Color) {
  * the thumb was drawn only, a readout nobody could grab.
  */
 @Composable
-internal fun BoxScope.ScrollbarThumb(scrollState: ScrollState) {
+fun BoxScope.ScrollbarThumb(scrollState: ScrollState) {
     val mode = LocalScrollbarMode.current
     if (scrollState.maxValue <= 0 || mode == ScrollbarMode.Never) return
     val color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -366,7 +365,7 @@ private fun Density.thumbGeometry(viewport: Float, scrollState: ScrollState): Th
  * would otherwise take the key, never sees it. The arrows stay with the fields: a number field
  * steps its value with them.
  */
-internal fun Modifier.scrollPageKeys(scrollState: ScrollState, scope: CoroutineScope): Modifier =
+fun Modifier.scrollPageKeys(scrollState: ScrollState, scope: CoroutineScope): Modifier =
     onPreviewKeyEvent { event ->
         if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
         val direction = when (event.key) {
@@ -388,7 +387,7 @@ private const val SCROLL_PAGE_FRACTION: Float = 0.85f
  * there. The one implementation: [FadingScrollColumn] and the dossier's centered editor pane
  * both draw through it (the pane used to carry its own copy).
  */
-internal fun DrawScope.drawBottomScrollCue(
+fun DrawScope.drawBottomScrollCue(
     fadeColor: Color,
     fadeHeightPx: Float,
     chevron: Boolean,
@@ -427,15 +426,15 @@ internal fun DrawScope.drawBottomScrollCue(
  * the scroller's own bottom fade down while it rides. The card draws its own "more below" cue
  * above itself; the scroller's fade would otherwise wash out the card's bottom row.
  */
-internal class BottomFadeStandDown {
+class BottomFadeStandDown {
     var active by mutableStateOf(false)
 }
 
-internal val LocalBottomFadeStandDown = staticCompositionLocalOf<BottomFadeStandDown?> { null }
+val LocalBottomFadeStandDown = staticCompositionLocalOf<BottomFadeStandDown?> { null }
 
 /** The chevron's ink in [drawBottomScrollCue]. */
 @Composable
-internal fun scrollCueColor(): Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+fun scrollCueColor(): Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
 
 /**
  * When the [ScrollbarThumb]s show — Advanced → Application **Scrollbars**. Every thumb in the app
@@ -500,7 +499,7 @@ private const val SCROLLBAR_THUMB_ACTIVE_ALPHA: Float = 0.7f
  * under the 16 dp content padding the dossier pane uses, so it never covers a control. Also the
  * gutter a column reserves when its content runs to the edge ([RailPanelScrollColumn], the tool dialogs).
  */
-internal val SCROLLBAR_HIT_WIDTH: Dp = 12.dp
+val SCROLLBAR_HIT_WIDTH: Dp = 12.dp
 
 /**
  * Lets a child extend [amount] past its parent's end edge — into padding the parent applied —

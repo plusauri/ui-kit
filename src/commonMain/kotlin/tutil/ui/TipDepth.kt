@@ -88,7 +88,7 @@ internal fun TipDepth.edgeBrush(edge: Color, top: Float, bottom: Float): Brush =
  * rect at (+2, +3) in [flatColor]; [Raised] stacks three widening, fainter rects that fall mostly
  * downward, which reads as a soft shadow without a blur pass (a canvas blur is not portable here).
  */
-internal fun DrawScope.drawTipShadow(
+fun DrawScope.drawTipShadow(
     depth: TipDepth,
     x: Float,
     y: Float,
@@ -118,12 +118,12 @@ internal fun DrawScope.drawTipShadow(
 }
 
 /** Face gradient over a drawn card; no-op for a depth with none. */
-internal fun DrawScope.drawTipFace(depth: TipDepth, x: Float, y: Float, w: Float, h: Float, radius: Float) {
+fun DrawScope.drawTipFace(depth: TipDepth, x: Float, y: Float, w: Float, h: Float, radius: Float) {
     val brush = depth.faceBrush(y, y + h) ?: return
     drawRoundRect(brush, Offset(x, y), Size(w, h), CornerRadius(radius))
 }
 
 /** 1 px edge, beveled when the depth says so. */
-internal fun DrawScope.drawTipEdge(depth: TipDepth, edge: Color, x: Float, y: Float, w: Float, h: Float, radius: Float) {
+fun DrawScope.drawTipEdge(depth: TipDepth, edge: Color, x: Float, y: Float, w: Float, h: Float, radius: Float) {
     drawRoundRect(depth.edgeBrush(edge, y, y + h), Offset(x, y), Size(w, h), CornerRadius(radius), style = Stroke(1f))
 }

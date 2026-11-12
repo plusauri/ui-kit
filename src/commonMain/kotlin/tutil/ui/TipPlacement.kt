@@ -160,10 +160,10 @@ internal const val TipPointerInsetPx = 12
  * attached to the cursor, and the extra air is what lets the pinned card's settled chrome read as
  * a change of state rather than a flicker.
  */
-internal const val FollowsPointerDxPx = 24
+const val FollowsPointerDxPx = 24
 
 /** How far above the pointer a [TipPlacement.FollowsPointer] card's bottom edge rides. */
-internal const val FollowsPointerDyPx = 8
+const val FollowsPointerDyPx = 8
 
 /**
  * The **"this card is frozen for you"** fill — the one color every hover card takes when it stops
@@ -321,7 +321,7 @@ fun rememberTipPositionProvider(
  * then raises its own card, as a reader scanning down expects). Judged on a whole displacement,
  * never one sample, so the hand's wobble on the way cannot drop the card (`info-hover-chips`).
  */
-internal fun isClosingOn(from: Offset, to: Offset, card: Rect): Boolean {
+fun isClosingOn(from: Offset, to: Offset, card: Rect): Boolean {
     if (to.x in card.left..card.right && to.y in card.top..card.bottom) return true
     val nearest = Offset(from.x.coerceIn(card.left, card.right), from.y.coerceIn(card.top, card.bottom))
     val aim = nearest - from
@@ -341,4 +341,4 @@ internal fun isClosingOn(from: Offset, to: Offset, card: Rect): Boolean {
 private const val ClosingConeCos = 0.35f
 
 /** Displacement (px) a latched card waits for before judging the pointer's direction — hand jitter. */
-internal const val ClosingJudgeMinPx = 4f
+const val ClosingJudgeMinPx = 4f
