@@ -24,7 +24,7 @@ object HoverCardSizes {
     }
 
     /** Forget every slot — tests only. */
-    fun clear() = sizes.clear()
+    internal fun clear() = sizes.clear()
 }
 
 /**
@@ -55,4 +55,4 @@ internal val HoverCardMinSize = DpSize(160.dp, 80.dp)
 internal val HoverCardGripSize = 20.dp
 
 /** Test tag on a hover card's resize grip. */
-const val HoverCardGripTag = "hover-card-resize-grip"
+internal const val HoverCardGripTag = "hover-card-resize-grip"

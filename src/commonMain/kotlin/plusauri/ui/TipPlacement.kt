@@ -160,10 +160,10 @@ internal const val TipPointerInsetPx = 12
  * attached to the cursor, and the extra air is what lets the pinned card's settled chrome read as
  * a change of state rather than a flicker.
  */
-const val FollowsPointerDxPx = 24
+internal const val FollowsPointerDxPx = 24
 
 /** How far above the pointer a [TipPlacement.FollowsPointer] card's bottom edge rides. */
-const val FollowsPointerDyPx = 8
+internal const val FollowsPointerDyPx = 8
 
 /**
  * The **"this card is frozen for you"** fill — the one color every hover card takes when it stops
