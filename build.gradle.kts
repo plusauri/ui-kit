@@ -46,5 +46,18 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+
+        // A control's tests move with it. The pure ones are plain JUnit 5; the ones that drive a
+        // control compose it, so they need the Compose UI test harness and a desktop runtime.
+        jvmTest.dependencies {
+            implementation("org.junit.jupiter:junit-jupiter:5.11.4")
+            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+            implementation(compose.uiTest)
+            implementation(compose.desktop.currentOs)
+        }
     }
+}
+
+tasks.named<Test>("jvmTest") {
+    useJUnitPlatform()
 }
