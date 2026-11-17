@@ -29,3 +29,9 @@ val LocalCopyWords = staticCompositionLocalOf { CopyWords(copy = "", copied = ""
 
 /** The glyph [CopyIconButton] draws at rest. The product provides its branded copy plate. */
 val LocalCopyGlyph = staticCompositionLocalOf<ImageVector> { Icons.Default.ContentCopy }
+
+/** What an empty [YearInput] says before anything is typed. */
+class YearInputWords(val placeholder: String)
+
+/** The words for [YearInputWords]; see the note at the top of this file. */
+val LocalYearInputWords = staticCompositionLocalOf { YearInputWords(placeholder = "") }
