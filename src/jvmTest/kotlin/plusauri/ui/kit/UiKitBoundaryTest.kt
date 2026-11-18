@@ -32,16 +32,45 @@ class UiKitBoundaryTest {
 
     @Test
     fun `no kit source names a product package or AppStrings`() {
-        val offenders = File(moduleDir, "src").listFiles().orEmpty()
-            .filter { it.isDirectory && it.name.endsWith("Main") }
-            .flatMap { set -> set.walk().filter { it.isFile && it.extension == "kt" }.toList() }
-            .flatMap { file -> offenses(file.readText()).map { "${file.relativeTo(moduleDir)}:$it" } }
+        val offenders = sourceOffenders(File(moduleDir, "src"))
         assertTrue(
             offenders.isEmpty(),
             "`:ui-kit` takes strings and plain values; it does not reach into the product:\n" +
                 offenders.joinToString("\n"),
         )
     }
+
+    /**
+     * The gallery shows the kit the way a host would use it, so it keeps the kit's rule: its one
+     * project dependency is the kit, and its sources name no product package. A gallery that reached
+     * into a product would stop proving the kit stands on its own.
+     */
+    @Test
+    fun `the gallery depends on the kit alone and names no product package`() {
+        val gallery = File(moduleDir, "gallery")
+        val build = File(gallery, "build.gradle.kts")
+        assertTrue(build.isFile, "the gallery's build file is missing: ${build.path}")
+        val projectDeps = build.readLines().mapIndexedNotNull { i, line ->
+            val code = line.trim()
+            if (code.startsWith("//") || code.startsWith("*") || "project(" !in code) null
+            else if ("""project(":")""" in code) null
+            else "gallery/build.gradle.kts:${i + 1}  $code"
+        }
+        assertTrue(projectDeps.isEmpty(), "`:gallery` may depend only on the kit and Compose:\n" + projectDeps.joinToString("\n"))
+
+        val offenders = sourceOffenders(File(gallery, "src"))
+        assertTrue(
+            offenders.isEmpty(),
+            "`:gallery` passes plain words in, as a host does; it does not name a product:\n" +
+                offenders.joinToString("\n"),
+        )
+    }
+
+    private fun sourceOffenders(srcDir: File): List<String> =
+        srcDir.listFiles().orEmpty()
+            .filter { it.isDirectory && it.name.endsWith("Main") }
+            .flatMap { set -> set.walk().filter { it.isFile && it.extension == "kt" }.toList() }
+            .flatMap { file -> offenses(file.readText()).map { "${file.relativeTo(moduleDir)}:$it" } }
 
     /** The scan is empty while the kit has no sources, so prove it would catch each shape. */
     @Test

@@ -12,6 +12,17 @@ The kit depends on Compose and nothing else. A control takes its strings as para
 ./gradlew jvmTest compileKotlinWasmJs
 ```
 
+## The gallery
+
+`gallery/` is a small app with a page for every family of controls, each one live, so the kit can be seen and tried without a host product. Start it with:
+
+```
+./gradlew :gallery:run                              # desktop
+./gradlew :gallery:wasmJsBrowserDevelopmentRun      # browser
+```
+
+It depends on the kit and Compose only, and it provides the kit words (`KitWords.kt`) in English the way a host would. `UiKitBoundaryTest` holds it to the kit's rule, and `GalleryPagesComposeTest` opens every page in light and dark, so a page that hands a control arguments it refuses fails in CI. A new control joins its family's page in `GalleryPage.kt`, or gets a page of its own there. The gallery is never published.
+
 ## Releases
 
 The kit is published to GitHub Packages as `com.plusauri:ui-kit` (with `ui-kit-jvm`, `ui-kit-wasm-js`, `ui-kit-iosarm64`, `ui-kit-iossimulatorarm64` and `ui-kit-android` beside it), from `https://maven.pkg.github.com/plusauri/ui-kit`. Reading it needs a classic GitHub token with `read:packages`; fine-grained tokens do not work with GitHub Packages' Maven registry.
