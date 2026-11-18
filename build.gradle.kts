@@ -7,10 +7,16 @@ plugins {
     id("com.android.library") version "8.6.1"
     id("org.jetbrains.compose") version "1.11.0"
     id("org.jetbrains.kotlin.plugin.compose") version "2.3.20"
+    `maven-publish`
 }
 
+/**
+ * The release version, written here and nowhere else. A release is a tag `v<version>` on a commit
+ * whose build says the same version: `.github/workflows/release.yml` refuses a tag that disagrees,
+ * then publishes to GitHub Packages. Raise it in the commit you mean to release.
+ */
 group = "com.plusauri"
-version = "0.1.0-SNAPSHOT"
+version = "0.1.0"
 
 android {
     namespace = "com.plusauri.ui.kit"
@@ -27,7 +33,11 @@ android {
  */
 kotlin {
     jvm()
-    androidTarget()
+    androidTarget {
+        // Android is configured, not shipped, but a host that compiles its own Android target
+        // against the kit needs a variant to resolve.
+        publishLibraryVariants("release")
+    }
     iosSimulatorArm64()
     iosArm64()
     wasmJs {
@@ -65,4 +75,22 @@ tasks.named<Test>("jvmTest") {
     useJUnitPlatform()
     // Keeps a test JVM that composes from registering as a foreground macOS app.
     systemProperty("apple.awt.UIElement", "true")
+}
+
+/**
+ * GitHub Packages, `plusauri/ui-kit`. The release workflow publishes with its own `GITHUB_TOKEN`;
+ * a hand publish needs a classic token with `write:packages` in `GITHUB_TOKEN` (or the Gradle
+ * properties `gpr.user` / `gpr.key`). `publishToMavenLocal` needs neither.
+ */
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/plusauri/ui-kit")
+            credentials {
+                username = providers.gradleProperty("gpr.user").orElse(providers.environmentVariable("GITHUB_ACTOR")).orNull
+                password = providers.gradleProperty("gpr.key").orElse(providers.environmentVariable("GITHUB_TOKEN")).orNull
+            }
+        }
+    }
 }
