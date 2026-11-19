@@ -242,6 +242,11 @@ fun ToggleImageButton(
     selectionMark: SelectionMark = SelectionMark.None,
     folded: Boolean = false,
     modifier: Modifier = Modifier,
+    /**
+     * Where the face (mark and label) sits when the button is wider than it, as in a side toolbar's
+     * equal-width column. Centered by default; a column passes [Alignment.CenterStart] so the marks line up.
+     */
+    faceAlignment: Alignment = Alignment.Center,
 ) {
     require(selectionMark == SelectionMark.None || widthMode == ToggleButtonWidth.Fit) {
         "selectionMark needs ToggleButtonWidth.Fit — a square toggle has no room beside its glyph"
@@ -309,7 +314,7 @@ fun ToggleImageButton(
             },
         ) {
             Box(
-                contentAlignment = Alignment.Center,
+                contentAlignment = faceAlignment,
                 // The product's keyboard focus, on the button face itself — first in the chain, so
                 // it spans the face before any padding. Not on the Surface's modifier: Surface
                 // widens that to its minimum touch target, and the ring swallowed the label.

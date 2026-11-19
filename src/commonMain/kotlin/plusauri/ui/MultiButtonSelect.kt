@@ -212,7 +212,8 @@ enum class MbsPanelTransition {
  *                          `Asking for intrinsic measurements of SubcomposeLayout layouts is not
  *                          supported` the moment it opens. Leave this false there — plain
  *                          [ToggleButtonWidth.Fit] toggles measure fine.
- *                          A toolbar on the left or right stacks its buttons as an aligned list.
+ *                          A toolbar on the left or right stacks its buttons as an aligned list, each face
+ *                          (selection mark and label) starting at the same edge.
  * @param buttonSize        Side length of each [ToggleImageButton] surface (default 48.dp;
  *                          use [SubsectionToolbar.ButtonSize] for pastel subsection toolbars).
  * @param selectedIndex     Controlled ExactlyOne index; null = uncontrolled (unless [selectedMask]).
@@ -620,6 +621,12 @@ fun MultiButtonSelect(
                 deselectedAccent = slotAccents?.getOrNull(i)?.deselected,
                 selectionMark = selectionMark,
                 folded = foldedMask?.getOrNull(i) ?: false,
+                // An aligned list of side-toolbar buttons reads down its marks, so their faces start at one edge.
+                faceAlignment = if (equalSlots && (buttonBarSide == ViewSide.Left || buttonBarSide == ViewSide.Right)) {
+                    Alignment.CenterStart
+                } else {
+                    Alignment.Center
+                },
                 modifier = (optionTags?.getOrNull(i)?.takeIf { tagged }?.let { Modifier.fieldTag(it) } ?: Modifier)
                     .onFocusChanged { focus ->
                         when {
