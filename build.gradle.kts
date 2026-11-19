@@ -16,7 +16,7 @@ plugins {
  * then publishes to GitHub Packages. Raise it in the commit you mean to release.
  */
 group = "com.plusauri"
-version = "0.3.0"
+version = "0.4.0"
 
 android {
     namespace = "com.plusauri.ui.kit"
