@@ -550,3 +550,48 @@ fun ResetToFullButton(name: String, onClick: () -> Unit) {
         )
     }
 }
+
+/** Which edge of the window a side panel sits on, for [PanelSeamDivider]. */
+enum class PanelSide { Leading, Trailing }
+
+/**
+ * The vertical seam between a side panel and the content beside it: click the pill to fold or open the
+ * panel, drag the rule to size it. The look is the region seam's ([seamLook]): a blue pill while the panel
+ * shows, gold once it is folded away. The caret points at the panel while it shows and away once folded,
+ * on either [side], so a caller never inverts flags to get a right-hand panel.
+ *
+ * The caller lays the panel out and hides it when [collapsed]; this draws only the seam.
+ *
+ * @param hideLabel Hover tip and a11y label while the panel shows (the click will fold it).
+ * @param showLabel Hover tip and a11y label while it is folded (the click will open it).
+ * @param onResize  Non-null makes the rule a resize handle while the panel shows: pixels, **positive when
+ *                  the panel should grow**, whichever side it is on. Clamp in the caller.
+ * @param onResizeStopped The drag's end, for a caller that keeps the width once rather than per frame.
+ */
+@Composable
+fun PanelSeamDivider(
+    side: PanelSide,
+    collapsed: Boolean,
+    onToggle: () -> Unit,
+    hideLabel: String,
+    showLabel: String,
+    onResize: ((Float) -> Unit)? = null,
+    onResizeStopped: () -> Unit = {},
+) {
+    val trailing = side == PanelSide.Trailing
+    val mirror = LocalLayoutDirection.current == LayoutDirection.Rtl
+    // A drag reports pixels rightward on screen; a left-hand panel grows with them, a right-hand one shrinks.
+    val growsTrailing = !trailing
+    CollapseGrabberDivider(
+        orientation = CollapseOrientation.Vertical,
+        // The caret points leading while `collapsed` is false; a trailing panel flips it to point at itself.
+        collapsed = collapsed != trailing,
+        onToggle = onToggle,
+        collapsedLabel = if (trailing) showLabel else hideLabel,
+        expandedLabel = if (trailing) hideLabel else showLabel,
+        look = seamLook(if (collapsed) RegionShown.Closed else RegionShown.Open),
+        tooltip = if (collapsed) showLabel else hideLabel,
+        onDrag = onResize?.takeIf { !collapsed }?.let { resize -> { px -> resize(if (growsTrailing != mirror) px else -px) } },
+        onDragStopped = onResizeStopped,
+    )
+}

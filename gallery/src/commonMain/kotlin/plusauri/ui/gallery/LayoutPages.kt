@@ -27,6 +27,8 @@ import plusauri.ui.ActionKind
 import plusauri.ui.ActionPill
 import plusauri.ui.CollapseGrabberDivider
 import plusauri.ui.CollapseOrientation
+import plusauri.ui.PanelSeamDivider
+import plusauri.ui.PanelSide
 import plusauri.ui.CollapsibleDetailDivider
 import plusauri.ui.CollapsibleHeaderChrome
 import plusauri.ui.CollapsibleSection
@@ -46,7 +48,8 @@ internal const val CollapsibleSectionBlurb =
 
 internal const val SeamsBlurb =
     "The grabber family. CollapsibleDetailDivider folds a section an item carries. " +
-        "CollapseGrabberDivider and RegionSeamDivider fold or resize a region; SplitSeam moves the " +
+        "CollapseGrabberDivider and RegionSeamDivider fold or resize a region; PanelSeamDivider folds and " +
+        "sizes a side panel on either edge; SplitSeam moves the " +
         "split between two panes; ResetToFullButton puts a region back to its full size."
 
 internal const val ScrollingBlurb =
@@ -158,6 +161,28 @@ fun SeamsPage() = PageColumn {
             Box(Modifier.weight(1f).fillMaxHeight()) { Placeholder("Main pane", 140.dp) }
         }
         Readout("side width: ${sideWidth.value.toInt()} dp")
+    }
+
+    var leftFolded by remember { mutableStateOf(false) }
+    var rightFolded by remember { mutableStateOf(false) }
+    var leftWidth by remember { mutableStateOf(120.dp) }
+    var rightWidth by remember { mutableStateOf(140.dp) }
+    ExampleCard("PanelSeamDivider: a side panel on each edge") {
+        Row(Modifier.fillMaxWidth().height(140.dp)) {
+            if (!leftFolded) Box(Modifier.width(leftWidth).fillMaxHeight()) { Placeholder("List", 140.dp) }
+            PanelSeamDivider(
+                PanelSide.Leading, leftFolded, { leftFolded = !leftFolded }, "Hide the list", "Show the list",
+                onResize = { px -> leftWidth = (leftWidth + with(density) { px.toDp() }).coerceIn(80.dp, 260.dp) },
+            )
+            Box(Modifier.weight(1f).fillMaxHeight()) { Placeholder("Content", 140.dp) }
+            PanelSeamDivider(
+                PanelSide.Trailing, rightFolded, { rightFolded = !rightFolded }, "Hide the inspector", "Show the inspector",
+                onResize = { px -> rightWidth = (rightWidth + with(density) { px.toDp() }).coerceIn(80.dp, 260.dp) },
+            )
+            if (!rightFolded) Box(Modifier.width(rightWidth).fillMaxHeight()) { Placeholder("Inspector", 140.dp) }
+        }
+        Hint("Drag either rule toward the content to widen its panel. The caret points at the panel while it shows.")
+        Readout("list ${leftWidth.value.toInt()} dp, inspector ${rightWidth.value.toInt()} dp")
     }
 
     var shown by remember { mutableStateOf(RegionShown.Open) }
