@@ -46,11 +46,18 @@ import plusauri.ui.ToggleButtonWidth
 import plusauri.ui.ToggleImageButton
 import plusauri.ui.ToggleState
 import plusauri.ui.TwoOptionToggle
+import plusauri.ui.LabeledSlideToggle
+import plusauri.ui.SlideToggle
+import plusauri.ui.SlideToggleDefaults
 import plusauri.ui.ViewSide
 
 internal const val TwoOptionToggleBlurb =
     "A two-option choice as one control: a MultiButtonSelect at the compact toolbar size, with a " +
         "check mark on the option that is on, so color is not the only cue."
+
+internal const val SlideToggleBlurb =
+    "A compact on-or-off switch with a rectangular grip. LabeledSlideToggle sets a label and an " +
+        "optional hint beside it and makes the whole row the switch."
 
 internal const val MultiButtonSelectBlurb =
     "A toolbar of ToggleImageButtons that show and hide content panels. Exactly one, one or none, " +
@@ -67,6 +74,34 @@ internal const val EnumSelectBlurb =
 internal const val MenusBlurb =
     "CompactDropdownMenu is the kit's denser menu, with CompactDropdownMenuItem rows. " +
         "CompactFilterChip is a filter chip at the same compact height."
+
+// ── SlideToggle ───────────────────────────────────────────────────────────────
+
+@Composable
+fun SlideTogglePage() = PageColumn {
+    var plain by remember { mutableStateOf(true) }
+    ExampleCard("SlideToggle, red and green rails (the default)") {
+        SlideToggle(checked = plain, onCheckedChange = { plain = it })
+        Readout("checked: $plain")
+    }
+
+    var offline by remember { mutableStateOf(false) }
+    ExampleCard("LabeledSlideToggle with a hint, primary colors") {
+        LabeledSlideToggle(
+            "Offline only",
+            offline,
+            { offline = it },
+            hint = "Nothing is sent while this computer is on a network.",
+            colors = SlideToggleDefaults.primaryColors(),
+        )
+        Hint("A click on the words toggles it too.")
+        Readout("checked: $offline")
+    }
+
+    ExampleCard("Disabled: shows its value, takes no click") {
+        LabeledSlideToggle("Locked by the plan", checked = true, onCheckedChange = {}, enabled = false)
+    }
+}
 
 // ── TwoOptionToggle ───────────────────────────────────────────────────────────
 

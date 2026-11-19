@@ -34,6 +34,7 @@ val galleryPages: List<GalleryPage> = listOf(
     GalleryPage("Labeled fields", "Inputs", LabeledFieldsBlurb) { LabeledFieldsPage() },
     // ── Choices ───────────────────────────────────────────────────────────────
     GalleryPage("TwoOptionToggle", "Choices", TwoOptionToggleBlurb) { TwoOptionTogglePage() },
+    GalleryPage("SlideToggle", "Choices", SlideToggleBlurb) { SlideTogglePage() },
     GalleryPage("MultiButtonSelect", "Choices", MultiButtonSelectBlurb) { MultiButtonSelectPage() },
     GalleryPage("ToggleImageButton", "Choices", ToggleImageButtonBlurb) { ToggleImageButtonPage() },
     GalleryPage("EnumSelect", "Choices", EnumSelectBlurb) { EnumSelectPage() },
