@@ -198,7 +198,7 @@ enum class MbsPanelTransition {
  * @param contentMaker      Composable content for panel `i`. Ignored when [toolbarOnly].
  * @param buttonBarSide     Which side the toolbar sits on.
  * @param groupingConstraint Constraint on simultaneous visible panels (uncontrolled mode).
- * @param equalSlots        When true (horizontal toolbars), each button gets the **same width**
+ * @param equalSlots        When true, each button gets the **same width**
  *                          (the widest natural width) so **icon centers stay evenly spaced** even
  *                          if labels differ in length. The row stays **left-aligned** and only as
  *                          wide as those slots — it does **not** stretch to the parent. If the
@@ -212,6 +212,7 @@ enum class MbsPanelTransition {
  *                          `Asking for intrinsic measurements of SubcomposeLayout layouts is not
  *                          supported` the moment it opens. Leave this false there — plain
  *                          [ToggleButtonWidth.Fit] toggles measure fine.
+ *                          A toolbar on the left or right stacks its buttons as an aligned list.
  * @param buttonSize        Side length of each [ToggleImageButton] surface (default 48.dp;
  *                          use [SubsectionToolbar.ButtonSize] for pastel subsection toolbars).
  * @param selectedIndex     Controlled ExactlyOne index; null = uncontrolled (unless [selectedMask]).
@@ -780,7 +781,12 @@ fun MultiButtonSelect(
             verticalArrangement = Arrangement.spacedBy(gap),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            buttonSelections.indices.forEach { i -> toggleAt(i) }
+            if (equalSlots) {
+                // A column of choices reads as a list only when its buttons line up: each as wide as the widest.
+                EqualWidthToggleColumn(count = buttonSelections.size, spacing = gap) { i, placed -> toggleAt(i, tagged = placed) }
+            } else {
+                buttonSelections.indices.forEach { i -> toggleAt(i) }
+            }
             bulkButton()
         }
     }
@@ -881,6 +887,42 @@ private fun EqualWidthToggleRow(
             placeables.forEach { placeable ->
                 placeable.placeRelative(x, 0)
                 x += slotWidth + spacingPx
+            }
+        }
+    }
+}
+
+/**
+ * The vertical twin of [EqualWidthToggleRow]: [count] children stacked with [spacing] between them, each as wide
+ * as the widest one's natural width (capped by the parent's width), so a side toolbar's buttons line up as a list.
+ */
+@Composable
+private fun EqualWidthToggleColumn(
+    count: Int,
+    spacing: Dp,
+    /** [placed] is false for the sizing pass, whose copies are measured and never placed. */
+    content: @Composable (index: Int, placed: Boolean) -> Unit,
+) {
+    SubcomposeLayout { constraints ->
+        if (count <= 0) {
+            return@SubcomposeLayout layout(0, 0) {}
+        }
+        val spacingPx = spacing.roundToPx()
+        val naturalSlot = List(count) { i ->
+            subcompose("measure-$i") { content(i, false) }.first().measure(Constraints()).width
+        }.maxOrNull() ?: 0
+        val slotWidth = if (constraints.hasBoundedWidth) minOf(naturalSlot, constraints.maxWidth) else naturalSlot
+        val placeables = List(count) { i ->
+            subcompose("place-$i") { content(i, true) }
+                .first()
+                .measure(Constraints(minWidth = slotWidth, maxWidth = slotWidth))
+        }
+        val height = placeables.sumOf { it.height } + spacingPx * (count - 1)
+        layout(slotWidth, height) {
+            var y = 0
+            placeables.forEach { placeable ->
+                placeable.placeRelative(0, y)
+                y += placeable.height + spacingPx
             }
         }
     }
