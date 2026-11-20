@@ -41,11 +41,10 @@ import androidx.compose.ui.unit.dp
  * swatch — was the one already judged attractive, so an action in that shape is one vocabulary
  * fewer, not one more.
  *
- * **It is the inline-action rule.** Introduced 2026-09-12 (`mortgage-generators-standardized`) at
- * three trial sites; settled since, and every small side action in the product is one of these —
- * the last inline `TextButton`s moved over on 2026-10-19 (`get-consistent-on-button-styles`). Where it
- * sits among the other button families: Rule 10 of
- * `planning/design-notes/dossier-entry-control-conventions.md`.
+ * **It is the inline-action rule.** Every small side action beside a field or an item is one of
+ * these, never an inline `TextButton`. Among the other button families: a dialog's answer is a
+ * [DialogConfirmButton], a back-out or any other footer choice a [DialogDismissButton], and a
+ * small action on the thing beside it an [ActionPill].
  *
  * **The color says what kind of action it is**, not where it sits — [ActionKind]. Three kinds, three
  * hues, resolved in one place ([ActionKind.color]) so a Remove is the same red on every editor and
@@ -90,7 +89,7 @@ import androidx.compose.ui.unit.dp
  *   question, which the sender pastes into a forum search or an email. **Neutral**, like [Clear]:
  *   nothing happens to the thing itself. The glyph is `#`, read as "a reference number", because a
  *   copy symbol is not in every font the app draws with (wasm included) and `#` is. Added
- *   2026-10-19 (`reach-out-follow-ons`); the caller swaps the label to a short "Copied" for a beat.
+ *   2026-10-19; the caller swaps the label to a short "Copied" for a beat.
  * - [Previous] / [Next] — step a view one place back or forward: the Forecaster's year, one year at
  *   a time. **Primary**, like [Go] — they move the reader through the forecast and change nothing —
  *   with `‹` / `›`, drawn glyph-only beside the Year scrubber. Two kinds rather than one, because the

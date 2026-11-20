@@ -282,7 +282,7 @@ class HoverFlightState {
 val LocalHoverFlight = compositionLocalOf<HoverFlightState?> { null }
 
 /**
- * **Esc drops a latched card** (`info-hover-chips`): once a card has tinted and the reader has
+ * **Esc drops a latched card**: once a card has tinted and the reader has
  * gone to it, Esc closes it — the way out of a card that is now in the way, without steering
  * the pointer off it. One slot, app-wide, because only one card is ever up ([LocalChartTipOwner]).
  *

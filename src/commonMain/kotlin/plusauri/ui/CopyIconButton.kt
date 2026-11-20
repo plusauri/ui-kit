@@ -5,7 +5,7 @@
 // `clipEntryOf(text)` per target (jvm, wasmJs, iosArm64, iosSimulatorArm64) plus a coroutine scope
 // at every copy button. That is a multiplatform change, not a warning cleanup, so the deprecated —
 // and still fully functional — API is kept here deliberately and the noise is silenced at the file
-// level. See planning/todos/compose-deprecation-migrations.md.
+// level.
 @file:Suppress("DEPRECATION")
 
 package plusauri.ui

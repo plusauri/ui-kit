@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 
 /**
  * A pill that says "hover me for the detail card" — the one explicit place an item's hover card
- * opens from (`info-hover-chips`). Two hosts, one look:
+ * opens from. Two hosts, one look:
  *
  * - **A table value** — a [DataTableView] row card under [RowTooltipAnchor.ValueChip]: the Balance
  *   Sheet's End value, Cash Flow's Value, Sales / Inv's After. [text] is the cell's own text in its
@@ -90,8 +90,7 @@ fun InfoChip(
  *   blue, as it always was.
  * - [Description] — a **general description** of a control: the paragraph that explains what a
  *   setting does, tucked behind the label that names it instead of standing in the layout. Brand
- *   gold, so it never reads as "this item has a card". Convention:
- *   `planning/design-notes/description-info-chips.md`.
+ *   gold, so it never reads as "this item has a card".
  */
 enum class InfoChipKind {
     Detail,
@@ -114,7 +113,7 @@ private val DescriptionCardOptions: HoverDetailOptions =
  *
  * Use it where a control would otherwise carry a paragraph of explanation in the layout. The label
  * stays where it was, so nothing moves for a reader who already knows the control; a reader who
- * does not reaches for the pill. Convention: `planning/design-notes/description-info-chips.md`.
+ * does not reaches for the pill.
  */
 @Composable
 fun DescriptionInfoChip(

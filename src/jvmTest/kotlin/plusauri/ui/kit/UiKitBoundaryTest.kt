@@ -107,7 +107,7 @@ class UiKitBoundaryTest {
     private companion object {
         /**
          * Every product package starts `tutil.` or `tutil_` (`tutil_modeled` is the Wire model). The kit
-         * lives in `plusauri.ui` since step 12 of `extract-ui-kit`, so it has no reason to name any of
+         * lives in `plusauri.ui`, so it has no reason to name any of
          * them, and the repository it moves to should never carry the name.
          */
         val FORBIDDEN = Regex("""(?<![\w.])tutil[._]\w""")

@@ -53,8 +53,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
 // The dialog family, moved from Tutilis's :tutil-ui (CompactButton.kt, DialogButtons.kt, NamedHeader.kt and
-// HelpDialogScaffold.kt's ResizableDialogShell) when Loquilis became its second user. Which button goes where is
-// Tutilis's Rule 10 (planning/design-notes/dossier-entry-control-conventions.md): a dialog's answer is a
+// HelpDialogScaffold.kt's ResizableDialogShell) when Loquilis became its second user. Which button goes where:
+// a dialog's answer is a
 // DialogConfirmButton, a back-out or any other footer choice a DialogDismissButton, and a small action on the
 // thing beside it an ActionPill.
 

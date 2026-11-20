@@ -25,8 +25,7 @@ import kotlin.math.roundToInt
  * Where a hover card goes, relative to what raised it. **The one placement seam** for every hover
  * tip in the app — Compose popups ([HoverTooltip], [HoverDetailPopup], [OverflowTooltipText], the
  * beam and slider readouts) and the canvas Family A card ([placeTooltipCard]) all resolve their
- * geometry through [tipCardOffset] with one of these. Catalog and rationale:
- * `planning/design-notes/hover-tip-placement.md`.
+ * geometry through [tipCardOffset] with one of these.
  *
  * Placement is deliberately only *where*. Chrome (frosted or opaque) and timing (intent, close
  * grace, flight) vary independently of it — parked cards are frosted on Bird's Eye and opaque on
@@ -319,7 +318,7 @@ fun rememberTipPositionProvider(
  * **nearest edge**, not its center: a card beside a table row is reached sideways, and a glide
  * straight down the rows beside it is perpendicular to that, so it reads as moving on (each row
  * then raises its own card, as a reader scanning down expects). Judged on a whole displacement,
- * never one sample, so the hand's wobble on the way cannot drop the card (`info-hover-chips`).
+ * never one sample, so the hand's wobble on the way cannot drop the card.
  */
 fun isClosingOn(from: Offset, to: Offset, card: Rect): Boolean {
     if (to.x in card.left..card.right && to.y in card.top..card.bottom) return true

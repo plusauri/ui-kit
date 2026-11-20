@@ -71,8 +71,6 @@ import androidx.compose.foundation.layout.Spacer
  * [ToggleState] over [ToggleImageButton] — driven controlled-single via `selectedIndex` +
  * `onSelectedIndexChange`, with `toolbarOnly = true`, `widthMode = ToggleButtonWidth.Fit` and
  * `buttonSize = MultiButtonSelectDefaults.CompactHeight` for a form or toolbar row.
- *
- * See `planning/design-notes/dossier-entry-control-conventions.md`.
  */
 
 /** Which side of the panel area the button toolbar sits on. */

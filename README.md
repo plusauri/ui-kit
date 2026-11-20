@@ -40,3 +40,7 @@ To release:
 - **Loquilis** is to depend on the release the same way, never on a Tutilis checkout.
 
 The history before this repo existed is the `kotlin/ui-kit` directory of Tutilis, carried over with `git subtree split`.
+
+## License
+
+MIT; see [LICENSE](LICENSE). The bundled flag font, `src/jvmMain/resources/font/NotoColorEmojiFlags.ttf`, is a subset of Google's Noto Color Emoji under the SIL Open Font License 1.1; its notice is [OFL.txt](src/jvmMain/resources/font/OFL.txt) beside it.

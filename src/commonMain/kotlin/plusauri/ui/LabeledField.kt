@@ -161,7 +161,7 @@ val GroupBoxLabelClearance: Dp = 8.dp
 /**
  * An outlined **group box** — a Material outlined-field frame with a label floating on its top
  * border — around a row or block of related controls. The sanctioned exception to [LabeledField]'s
- * label-beside-the-control rule (`planning/design-notes/dossier-entry-control-conventions.md`),
+ * label-beside-the-control rule,
  * for the cases where several sub-fields are read as one value: a year range, a
  * (year, currency, amount) triple.
  *
