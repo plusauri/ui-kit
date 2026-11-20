@@ -26,7 +26,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.foundation.focusable
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -213,7 +222,8 @@ private val ResizableDialogMaxHeight = 1000.dp
  * [content] is a [ColumnScope], and the caller decides its own scrolling, usually a [FadingScrollColumn] given
  * `Modifier.weight(1f, fill = false)`, then a [DialogFooter].
  *
- * The title truncates to one line and hands the rest back on hover. Escape and a click outside call [onDismiss].
+ * The title truncates to one line and hands the rest back on hover. The dialog takes the keys as it opens, and
+ * Escape or a click outside calls [onDismiss].
  *
  * @param defaultHeight Null opens the dialog as tall as its content (up to a maximum), which suits a short
  *   question; the first drag of the grip fixes a height from there. A size resets on each open.
@@ -236,6 +246,9 @@ fun ResizableDialog(
     // While the height follows the content, what it measured, so the first drag starts from there.
     var measured by remember { mutableStateOf(0.dp) }
     val fixed = height
+    // The dialog takes the keys as it opens, so Escape reaches it; a box inside that asks for them after keeps them.
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focus.requestFocus() }
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(
@@ -251,7 +264,14 @@ fun ResizableDialog(
             tonalElevation = 6.dp,
             shadowElevation = 6.dp,
         ) {
-            Box(modifier = if (fixed != null) Modifier.fillMaxSize() else Modifier.fillMaxWidth()) {
+            Box(
+                modifier = (if (fixed != null) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
+                    .onPreviewKeyEvent { event ->
+                        (event.type == KeyEventType.KeyDown && event.key == Key.Escape).also { if (it) onDismiss() }
+                    }
+                    .focusRequester(focus)
+                    .focusable(),
+            ) {
                 Column(
                     modifier = (if (fixed != null) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
                         // Keep the last line clear of the corner grip.

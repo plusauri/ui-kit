@@ -5,11 +5,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.isRoot
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import androidx.compose.ui.unit.dp
@@ -37,6 +43,21 @@ class ResizableDialogTest {
         onNodeWithText("Create").performClick()
         assertEquals(1, answers)
         onNodeWithContentDescription("Close (Esc)").performClick()
+        assertEquals(false, open)
+    }
+
+    @Test
+    fun `Escape closes it`() = runDesktopComposeUiTest(800, 600) {
+        var open by mutableStateOf(true)
+        setContent {
+            MaterialTheme {
+                if (open) ResizableDialog("Settings", onDismiss = { open = false }, closeLabel = "Close (Esc)", defaultWidth = 420.dp) { Text("Body") }
+            }
+        }
+        waitForIdle()
+        // A dialog is a layer of its own, the window's last root; it took the keys as it opened.
+        onAllNodes(isRoot()).onLast().performKeyInput { pressKey(Key.Escape) }
+        waitForIdle()
         assertEquals(false, open)
     }
 }
