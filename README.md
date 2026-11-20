@@ -25,12 +25,19 @@ It depends on the kit and Compose only, and it provides the kit words (`KitWords
 
 ## Releases
 
-The kit is published to GitHub Packages as `com.plusauri:ui-kit` (with `ui-kit-jvm`, `ui-kit-wasm-js`, `ui-kit-iosarm64`, `ui-kit-iossimulatorarm64` and `ui-kit-android` beside it), from `https://maven.pkg.github.com/plusauri/ui-kit`. Reading it needs a classic GitHub token with `read:packages`; fine-grained tokens do not work with GitHub Packages' Maven registry.
+The kit is published to **Maven Central** as `com.plusauri:ui-kit` (with `ui-kit-jvm`, `ui-kit-wasm-js`, `ui-kit-iosarm64`, `ui-kit-iossimulatorarm64` and `ui-kit-android` beside it). Reading it needs no account and no token: `mavenCentral()` is enough.
+
+While Tutilis and Loquilis move over, each release also goes to GitHub Packages (`https://maven.pkg.github.com/plusauri/ui-kit`), which needs a classic GitHub token with `read:packages`. That copy will be retired.
 
 To release:
 
 1. Set `version` in `build.gradle.kts` to the new version, in the commit you mean to release. Versions are semver; while it is `0.x`, a minor bump may break callers.
-2. Tag that commit `v<version>` and push the tag. `.github/workflows/release.yml` checks that the tag matches the build, runs the tests, and publishes every target. A version is published once: a fix is the next version.
+2. Tag that commit `v<version>` and push the tag. `.github/workflows/release.yml` checks that the tag matches the build, runs the tests, signs every file, uploads to Central and publishes to GitHub Packages.
+3. In the [Central Portal](https://central.sonatype.com) under **Deployments**, check the validated deployment and press **Publish**. A version on Central is permanent: it can never be removed or replaced, so a fix is the next version.
+
+Running the Release workflow by hand (**Actions → Release → Run workflow**) is a dry run: it uploads to Central only, so the deployment can be checked in the Portal and then dropped.
+
+Releases are signed with the key `Plusauri Releases` (fingerprint `1D3AD54F1509F3748C778A7937E2D16D15C4D9F8`, on `keyserver.ubuntu.com`).
 
 `.github/workflows/ci.yml` runs `jvmTest` and `compileKotlinWasmJs` on every push.
 
