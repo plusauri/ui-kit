@@ -1,5 +1,11 @@
 package plusauri.ui.gallery
 
+import plusauri.ui.DialogConfirmButton
+import plusauri.ui.DialogDismissButton
+import plusauri.ui.DialogFooter
+import plusauri.ui.FadingScrollColumn
+import plusauri.ui.ResizableDialog
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -132,5 +138,41 @@ fun IconButtonsPage() = PageColumn {
         }
         Hint("Click to copy the sentence. The words on hover come from the host (LocalCopyWords).")
         Readout("copies: $copied")
+    }
+}
+
+internal const val DialogsBlurb =
+    "ResizableDialog is the one modal: a title with a close button, a body the caller scrolls, and a corner " +
+        "grip that sizes it. Its footer answers with a filled DialogConfirmButton and backs out with a " +
+        "DialogDismissButton; ActionPill is for small actions inside the body."
+
+@Composable
+fun DialogsPage() = PageColumn {
+    var open by remember { mutableStateOf(false) }
+    var destructive by remember { mutableStateOf(false) }
+    var last by remember { mutableStateOf("nothing yet") }
+    ExampleCard("ResizableDialog, as tall as its content until the grip is dragged") {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            DialogConfirmButton("Open", onClick = { destructive = false; open = true })
+            DialogDismissButton("Open a delete", onClick = { destructive = true; open = true })
+        }
+        Readout("last answer: $last")
+    }
+    if (open) {
+        ResizableDialog(
+            title = if (destructive) "Delete “A very long conversation title that will not fit on one line”?" else "Choose a model",
+            onDismiss = { open = false; last = "closed" },
+            closeLabel = "Close (Esc)",
+            defaultWidth = 460.dp,
+        ) {
+            FadingScrollColumn(Modifier.weight(1f, fill = false), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("The body scrolls once the dialog stops growing. Drag the corner to size it.")
+                repeat(if (destructive) 1 else 6) { Text("Line ${it + 1} of the body.") }
+            }
+            DialogFooter {
+                DialogDismissButton("Cancel", onClick = { open = false; last = "Cancel" })
+                DialogConfirmButton(if (destructive) "Delete" else "Create", destructive = destructive, onClick = { open = false; last = if (destructive) "Delete" else "Create" })
+            }
+        }
     }
 }

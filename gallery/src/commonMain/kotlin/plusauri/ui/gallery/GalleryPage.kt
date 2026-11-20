@@ -42,6 +42,7 @@ val galleryPages: List<GalleryPage> = listOf(
     // ── Buttons ───────────────────────────────────────────────────────────────
     GalleryPage("ActionPill", "Buttons", ActionPillBlurb) { ActionPillPage() },
     GalleryPage("Icon buttons", "Buttons", IconButtonsBlurb) { IconButtonsPage() },
+    GalleryPage("Dialogs", "Buttons", DialogsBlurb) { DialogsPage() },
     // ── Hover and chips ───────────────────────────────────────────────────────
     GalleryPage("Info chips", "Hover and chips", InfoChipsBlurb) { InfoChipsPage() },
     GalleryPage("Hover cards", "Hover and chips", HoverCardsBlurb) { HoverCardsPage() },
