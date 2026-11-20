@@ -567,6 +567,9 @@ enum class PanelSide { Leading, Trailing }
  * @param onResize  Non-null makes the rule a resize handle while the panel shows: pixels, **positive when
  *                  the panel should grow**, whichever side it is on. Clamp in the caller.
  * @param onResizeStopped The drag's end, for a caller that keeps the width once rather than per frame.
+ * @param accentColor Paints the pill in a warning color instead of the seam's open/folded look, for a panel
+ *                  that can hide something the reader must not miss (a plan that contradicts itself). Keep it
+ *                  for that: a fold alone is a choice, not a problem.
  */
 @Composable
 fun PanelSeamDivider(
@@ -577,6 +580,7 @@ fun PanelSeamDivider(
     showLabel: String,
     onResize: ((Float) -> Unit)? = null,
     onResizeStopped: () -> Unit = {},
+    accentColor: Color? = null,
 ) {
     val trailing = side == PanelSide.Trailing
     val mirror = LocalLayoutDirection.current == LayoutDirection.Rtl
@@ -589,7 +593,9 @@ fun PanelSeamDivider(
         onToggle = onToggle,
         collapsedLabel = if (trailing) showLabel else hideLabel,
         expandedLabel = if (trailing) hideLabel else showLabel,
-        look = seamLook(if (collapsed) RegionShown.Closed else RegionShown.Open),
+        accentColor = accentColor,
+        // The warning must not be repainted as an ordinary open or folded state.
+        look = if (accentColor == null) seamLook(if (collapsed) RegionShown.Closed else RegionShown.Open) else null,
         tooltip = if (collapsed) showLabel else hideLabel,
         onDrag = onResize?.takeIf { !collapsed }?.let { resize -> { px -> resize(if (growsTrailing != mirror) px else -px) } },
         onDragStopped = onResizeStopped,
