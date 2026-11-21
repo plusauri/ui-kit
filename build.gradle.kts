@@ -17,7 +17,7 @@ plugins {
 /**
  * The release version, written here and nowhere else. A release is a tag `v<version>` on a commit
  * whose build says the same version: `.github/workflows/release.yml` refuses a tag that disagrees,
- * then publishes to Maven Central and GitHub Packages. Raise it in the commit you mean to release.
+ * then publishes to Maven Central. Raise it in the commit you mean to release.
  */
 group = "com.plusauri"
 version = "0.6.0"
@@ -122,25 +122,6 @@ mavenPublishing {
             url.set("https://github.com/plusauri/ui-kit")
             connection.set("scm:git:https://github.com/plusauri/ui-kit.git")
             developerConnection.set("scm:git:ssh://git@github.com/plusauri/ui-kit.git")
-        }
-    }
-}
-
-/**
- * GitHub Packages, `plusauri/ui-kit`: still published beside Central while Tutilis and Loquilis
- * move over, then retired. The release workflow publishes with its own `GITHUB_TOKEN`; a hand
- * publish needs a classic token with `write:packages` in `GITHUB_TOKEN` (or the Gradle properties
- * `gpr.user` / `gpr.key`). `publishToMavenLocal` needs neither.
- */
-publishing {
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/plusauri/ui-kit")
-            credentials {
-                username = providers.gradleProperty("gpr.user").orElse(providers.environmentVariable("GITHUB_ACTOR")).orNull
-                password = providers.gradleProperty("gpr.key").orElse(providers.environmentVariable("GITHUB_TOKEN")).orNull
-            }
         }
     }
 }

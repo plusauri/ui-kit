@@ -1,15 +1,14 @@
 # A release: push a tag `v<version>` on a commit whose build.gradle.kts says that version.
 # Publishes every target (jvm, wasmJs, iosArm64, iosSimulatorArm64, android) to Maven Central as
-# com.plusauri:ui-kit, signed, and to GitHub Packages (https://github.com/orgs/plusauri/packages)
-# while Tutilis and Loquilis move over.
+# com.plusauri:ui-kit, signed.
 #
 # The Central upload stops at "validated" in the Central Portal (central.sonatype.com →
 # Deployments): a person presses Publish there, or Drop. A version published on Central is
-# permanent, and GitHub Packages refuses the same version twice, so a fix is always the next version.
+# permanent, so a fix is always the next version.
 #
 # Run by hand (Actions → Release → Run workflow) it is a dry run: the Central upload only, for the
-# version the chosen branch's build says, to be inspected in the Portal and dropped. Nothing
-# reaches GitHub Packages.
+# version the chosen branch's build says, to be inspected in the Portal and dropped (not
+# published: Publish there makes it permanent).
 #
 # Secrets, on plusauri/ui-kit only: MAVEN_CENTRAL_USERNAME / MAVEN_CENTRAL_PASSWORD (a Central
 # Portal user token) and SIGNING_IN_MEMORY_KEY / SIGNING_IN_MEMORY_KEY_PASSWORD (the release key,
@@ -30,7 +29,6 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
-      packages: write
     env:
       ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
       ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
@@ -60,8 +58,3 @@ jobs:
         run: ./gradlew jvmTest
       - name: Upload to Maven Central
         run: ./gradlew publishToMavenCentral
-      - name: Publish to GitHub Packages
-        if: github.event_name == 'push'
-        run: ./gradlew publishAllPublicationsToGitHubPackagesRepository
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

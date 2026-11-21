@@ -27,12 +27,12 @@ It depends on the kit and Compose only, and it provides the kit words (`KitWords
 
 The kit is published to **Maven Central** as `com.plusauri:ui-kit` (with `ui-kit-jvm`, `ui-kit-wasm-js`, `ui-kit-iosarm64`, `ui-kit-iossimulatorarm64` and `ui-kit-android` beside it). Reading it needs no account and no token: `mavenCentral()` is enough.
 
-While Tutilis and Loquilis move over, each release also goes to GitHub Packages (`https://maven.pkg.github.com/plusauri/ui-kit`), which needs a classic GitHub token with `read:packages`. That copy will be retired.
+Releases up to 0.6.0 also went to GitHub Packages (`https://maven.pkg.github.com/plusauri/ui-kit`), which needed a token to read; that copy is retired. 0.6.0 is the first version on Central. It was built from `48a30ec`, which carries the same code as the commit tagged `v0.6.0` plus the license files and the publishing setup.
 
 To release:
 
 1. Set `version` in `build.gradle.kts` to the new version, in the commit you mean to release. Versions are semver; while it is `0.x`, a minor bump may break callers.
-2. Tag that commit `v<version>` and push the tag. `.github/workflows/release.yml` checks that the tag matches the build, runs the tests, signs every file, uploads to Central and publishes to GitHub Packages.
+2. Tag that commit `v<version>` and push the tag. `.github/workflows/release.yml` checks that the tag matches the build, runs the tests, signs every file and uploads to Central.
 3. In the [Central Portal](https://central.sonatype.com) under **Deployments**, check the validated deployment and press **Publish**. A version on Central is permanent: it can never be removed or replaced, so a fix is the next version.
 
 Running the Release workflow by hand (**Actions → Release → Run workflow**) is a dry run: it uploads to Central only, so the deployment can be checked in the Portal and then dropped.
