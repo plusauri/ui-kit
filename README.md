@@ -2,6 +2,22 @@
 
 General Compose Multiplatform controls (package `plusauri.ui`): numeric and year inputs, multi-button selects, toggles, collapsible sections, compact menus, hover cards and tips, focus rings, labeled fields, the Plusauri theme. Targets JVM desktop, wasmJs, iOS and Android.
 
+## Using it
+
+The kit is on Maven Central, so no account or token is needed:
+
+```kotlin
+repositories { mavenCentral() }
+
+kotlin {
+    sourceSets {
+        commonMain.dependencies { implementation("com.plusauri:ui-kit:0.6.0") }
+    }
+}
+```
+
+A few controls need words they cannot know, such as what the copy button calls itself. The host provides them once, in its own language, through the composition locals in `KitWords.kt` (`LocalCopyWords`, `LocalYearInputWords`, `LocalScrollCueWords`). Their defaults are blank on purpose, so a host that forgets them shows unnamed controls rather than English in a French window.
+
 ## The rule
 
 The kit depends on Compose and nothing else. A control takes its strings as parameters, or reads a kit word (`KitWords.kt`) that the host provides once; it never reads a product's string table or model. `UiKitBoundaryTest` holds that line.
