@@ -9,6 +9,8 @@
 # Run by hand (Actions → Release → Run workflow) it is a dry run: the Central upload only, for the
 # version the chosen branch's build says, to be inspected in the Portal and dropped (not
 # published: Publish there makes it permanent).
+# Once that version is on Central, the Portal fails every component of the dry run with
+# "already exists". That is expected: the upload and the signing still ran, so drop it.
 #
 # Actions are pinned to commit SHAs (Dependabot keeps them current), since this job holds the
 # signing key.
