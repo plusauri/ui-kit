@@ -13,9 +13,12 @@
 # Actions are pinned to commit SHAs (Dependabot keeps them current), since this job holds the
 # signing key.
 #
-# Secrets, on plusauri/ui-kit only: MAVEN_CENTRAL_USERNAME / MAVEN_CENTRAL_PASSWORD (a Central
+# Secrets, in the `release` environment only: MAVEN_CENTRAL_USERNAME / MAVEN_CENTRAL_PASSWORD (a Central
 # Portal user token) and SIGNING_IN_MEMORY_KEY / SIGNING_IN_MEMORY_KEY_PASSWORD (the release key,
 # "Plusauri Releases", fingerprint 1D3AD54F1509F3748C778A7937E2D16D15C4D9F8, on keyserver.ubuntu.com).
+#
+# The `release` environment needs a maintainer's approval before the job starts, and only a `v*`
+# tag or `main` may use it. Only admins may create, move or delete a `v*` tag (a tag ruleset).
 #
 # macOS, because the iOS klibs are built on a Mac.
 name: Release
@@ -30,6 +33,7 @@ jobs:
     name: ${{ github.event_name == 'workflow_dispatch' && 'Dry run to Central' || format('Publish {0}', github.ref_name) }}
     runs-on: macos-latest
     timeout-minutes: 60
+    environment: release
     permissions:
       contents: read
     steps:
