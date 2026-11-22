@@ -72,15 +72,13 @@ sealed class ButtonImage {
 /**
  * How a [ToggleImageButton] sizes horizontally.
  *
- * [Square] is the icon-toolbar shape this control was born with: width == height == `buttonSize`,
- * which is why every existing caller abbreviates to three characters ("Tax", "Cli", "BS") and puts
- * the real name in a hover tip.
+ * [Square] is the icon-toolbar shape: width == height == `buttonSize`. Text in a square has room
+ * for an icon or a two- or three-letter abbreviation at most, with the full name in a hover tip.
  *
  * [Fit] keeps the height but lets **content drive the width**, so the same toggle behavior — the
  * selected/deselected indicator bar, the state contract, the [MultiButtonSelect] grouping — works
- * for word-length labels like "Early withdrawal $" without inventing a parallel chip control.
- * The square shape was the real obstacle to text, not [ButtonImage]: `Unicode` and `Content` could
- * always carry text, they just had nowhere to put it.
+ * for word-length labels like "Show totals" without a parallel chip control. [ButtonImage]'s
+ * `Unicode` and `Content` can carry text in either mode; [Fit] gives it room.
  */
 enum class ToggleButtonWidth {
     Square,
@@ -107,7 +105,7 @@ enum class ToggleButtonWidth {
  * icon toggle has no room beside its glyph.
  */
 enum class SelectionMark {
-    /** No slot; the pill and underbar carry selection (default — every existing row is unchanged). */
+    /** No slot; the pill and underbar carry selection (the default). */
     None,
 
     /** A small outlined box leading the content, ticked when selected. */
@@ -123,22 +121,22 @@ private val SelectionMarkGap: Dp = 6.dp
 /**
  * How strongly a `deselectedAccent` paints the underbar and the surface.
  *
- * Raised from 0.45 / 0.10 after reading the first build on screen: a theme `error` red is already
- * a dark, desaturated tone, and at 10% over a light surface it landed somewhere between pink and
- * nothing — the tab that most needs to be recognized at a glance was the faintest of the three.
+ * Fairly strong on purpose: a theme `error` red is already a dark, desaturated tone, and at a low
+ * alpha (around 10%) over a light surface it lands somewhere between pink and nothing, so the tab
+ * that most needs to be recognized at a glance would be the faintest.
  *
  * Selection is still legible because it is not carried by saturation alone: the selected slot swaps
  * to the **container** treatment and keeps its full-strength underbar, and the surface alpha still
- * differs by 6 points. If a future slot color does start losing its selected state, raise the
- * selected side rather than dropping these back — an unreadable severity is the worse failure.
+ * differs by 6 points. If a slot color does start losing its selected state, raise the selected
+ * side rather than lowering these — an unreadable severity is the worse failure.
  */
 private const val DeselectedAccentIndicatorAlpha = 0.85f
 private const val DeselectedAccentSurfaceAlpha = 0.22f
 
 /**
  * The bar under a [ToggleImageButton] — 4 dp, rounded — as its own piece, so a control that is not a
- * toggle can wear the same mark: the rail draws it under each section in that section's area color
- * ([SimulatorSection.areaColor]). The caller gives the width.
+ * toggle can wear the same mark — for example a navigation rail that draws it under each entry in
+ * that entry's own color. The caller gives the width.
  */
 @Composable
 fun ToggleUnderbar(color: Color, modifier: Modifier = Modifier) {
@@ -199,12 +197,12 @@ data class ButtonData(
  * @param enabled       When false the button is non-interactive and dimmed.
  * @param buttonSize    Side length in [ToggleButtonWidth.Square]; the **height** in
  *                      [ToggleButtonWidth.Fit], where content drives the width.
- * @param widthMode     [ToggleButtonWidth.Square] (default, unchanged) or [ToggleButtonWidth.Fit]
+ * @param widthMode     [ToggleButtonWidth.Square] (default) or [ToggleButtonWidth.Fit]
  *                      for text-width buttons.
  * @param textStyle     Style for [ButtonImage.Unicode] content. Defaults to the roomy headline that
  *                      suits a glyph in a square; text-width callers pass something label-sized.
  * @param selectedAccent Optional series / legend color. When non-null and selected, the surface
- *                      tint and underbar use this accent (e.g. Guardrails study paths) instead of
+ *                      tint and underbar use this accent (e.g. a chart series' color) instead of
  *                      theme primary — so the toggle stays legible as a color key. Disabled chrome
  *                      is unchanged.
  * @param selectionMark Optional leading checkbox mark that says *selected* by shape rather than by
@@ -217,14 +215,14 @@ data class ButtonData(
  *                      selected* — a severity, a lane identity — rather than merely marking which
  *                      one is open. A legend row wants [selectedAccent] alone: its colors answer
  *                      "which series is this", a question that is only asked of the series you
- *                      turned on. The dossier metadata tabs want the pair, because Errors is red
- *                      whether or not you are looking at it.
+ *                      turned on. Tabs that sort messages by severity want the pair, because an
+ *                      Errors tab is red whether or not you are looking at it.
  *
  *                      Deliberately dimmer than [selectedAccent] rather than a second full-strength
  *                      color: if both states are equally saturated, the accent stops carrying
  *                      selection at all and the underbar is doing the whole job alone.
- * @param folded        On, but what the button shows is folded away (a Forecast Detail chip whose
- *                      row is closed). Draws the selected underbar on the resting surface; still
+ * @param folded        On, but what the button shows is folded away (a chip whose table row is
+ *                      collapsed). Draws the selected underbar on the resting surface; still
  *                      announced as selected. Ignored when not selected, disabled, or accented.
  * @param modifier      Applied to the outermost [Column].
  */
@@ -256,10 +254,9 @@ fun ToggleImageButton(
     // says "not on screen". Only a selected button can be folded.
     val foldedLook = folded && isSelected && enabled && selectedAccent == null
     // A disabled toggle is not "selected" in any sense the reader can act on, so it must not wear
-    // the selected indicator. Before this, `enabled` reached only Surface (blocking the click) and
-    // the optional label *below* the button — so a text-mode toggle, whose words live in the image
-    // slot rather than in `label`, showed **no visual difference at all** when disabled. A lane
-    // that could never draw looked identical to a live, selected one.
+    // the selected indicator. Disabling has to show on the surface and underbar, not only block the
+    // click: a text-mode toggle keeps its words in the image slot rather than in `label`, so
+    // without this a disabled option would look identical to a live, selected one.
     val indicatorColor = when {
         !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
         isSelected && selectedAccent != null -> selectedAccent
@@ -291,7 +288,7 @@ fun ToggleImageButton(
         // The toggle's state, announced: a chip row otherwise says nothing about which chips are
         // on, and a reader (or a UI test) has only the tint to go by. Disabled is announced here
         // too, on the node that carries the option's tag — on the inner Surface alone, a reader of
-        // the option saw a dimmed chip described as an ordinary one.
+        // the option would find a dimmed chip described as an ordinary one.
         modifier = (if (fit) modifier.width(IntrinsicSize.Max) else modifier)
             .semantics {
                 selected = isSelected
@@ -315,9 +312,9 @@ fun ToggleImageButton(
         ) {
             Box(
                 contentAlignment = faceAlignment,
-                // The product's keyboard focus, on the button face itself — first in the chain, so
+                // The kit's keyboard focus ring, on the button face itself — first in the chain, so
                 // it spans the face before any padding. Not on the Surface's modifier: Surface
-                // widens that to its minimum touch target, and the ring swallowed the label.
+                // widens that to its minimum touch target, and the ring would swallow the label.
                 modifier = Modifier.focusRingFor(focused, RoundedCornerShape(8.dp))
                     .then(if (fit) Modifier.padding(horizontal = FitHorizontalPadding) else Modifier)
                     // Alpha on the container dims every ButtonImage variant alike — Unicode text,

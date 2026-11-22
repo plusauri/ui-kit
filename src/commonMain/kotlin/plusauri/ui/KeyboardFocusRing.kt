@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 private const val FocusPulseMillis = 650
 
 /**
- * The product's keyboard focus: a **ring** in the primary color while the node holds focus, and a
+ * The kit's keyboard focus: a **ring** in the primary color while the node holds focus, and a
  * short **pulse** of fill as focus arrives, so a move made from the keyboard is seen at a glance —
  * Material's own focus tint is a faint overlay that disappears on a tinted chip or a colored bar.
  * WCAG 2.4.7 asks that keyboard focus be visible; this is how every keyboard stop shows it.
@@ -54,7 +54,7 @@ fun Modifier.focusRingFor(
     inset: Dp = 0.dp,
 ): Modifier {
     val pulse = remember { Animatable(0f) }
-    // A pulse as focus arrives, and again whenever the reader asks where it is (`?`).
+    // A pulse as focus arrives, and again whenever the reader asks where it is ([FocusBeacon]).
     val pings = FocusBeacon.pings
     LaunchedEffect(focused, pings) {
         if (focused) {
@@ -68,8 +68,8 @@ fun Modifier.focusRingFor(
     return drawWithContent {
         drawContent()
         // [inset] keeps a full-width row's ring off its title. The stroke is centered on its
-        // path, and a clip to this node (the rail's rounded bands) cuts the outer half, so the
-        // stroke sits another half-width inside that margin.
+        // path, and a clip to this node (a rounded band, say) cuts the outer half, so the stroke
+        // sits another half-width inside that margin.
         val strokePx = 1.5.dp.toPx()
         val insetPx = inset.toPx() + strokePx / 2f
         val inner = Size(
@@ -85,16 +85,16 @@ fun Modifier.focusRingFor(
 }
 
 /**
- * Keyboard focus for a full-width seam. A primary wash behind the row, in the same shape a ring
- * would have taken, instead of a border around a line that is only a few pixels tall. Arrival and
- * `?` brighten it, then it settles. Put it ahead of [androidx.compose.foundation.focusable], the
+ * Keyboard focus for a full-width divider such as a [RegionSeamDivider]. A primary wash behind the
+ * row, in the same shape a ring would have taken, instead of a border around a line that is only a
+ * few pixels tall. Arrival and a [FocusBeacon] ping brighten it, then it settles. Put it ahead of [androidx.compose.foundation.focusable], the
  * same way as [keyboardFocusRing].
  */
 @Composable
 fun Modifier.keyboardFocusTint(
     shape: Shape = RoundedCornerShape(6.dp),
     inset: Dp = 1.dp,
-    /** Resting wash alpha. A seam on the page surface needs little; a tinted bar needs more. */
+    /** Resting wash alpha. A divider on the page surface needs little; a tinted bar needs more. */
     strength: Float = 0.14f,
 ): Modifier {
     var focused by remember { mutableStateOf(false) }

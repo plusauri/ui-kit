@@ -35,10 +35,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/** The grip ridges' green on an on rail (Tutilis's "favorable" green). */
+/** The grip ridges' green on an on rail: a Material green 800. */
 private val RailGreen = Color(0xFF2E7D32)
 
-/** The grip ridges' red on an off rail (Tutilis's "avoid" red). */
+/** The grip ridges' red on an off rail: a Material red 700. */
 private val RailRed = Color(0xFFD32F2F)
 
 /** Soft on-rail green — [RailGreen] lightened so form rows stay calm. */
@@ -76,7 +76,7 @@ object SlideToggleDefaults {
     /**
      * Default red/green hardware-switch palette: off rail is a soft [RailRed], on rail a soft
      * [RailGreen]. Neutral settings still use these as pure on/off LEDs (not "good/bad").
-     * Rails are slightly lightened so they sit with the warm Plusauri surfaces without shouting.
+     * Rails are slightly lightened so they sit with [PlusauriTheme]'s warm surfaces without shouting.
      */
     @Composable
     fun colors(
@@ -107,7 +107,7 @@ object SlideToggleDefaults {
 
     /**
      * Theme-primary palette for settings where red/green would read as "bad/good" rather than
-     * plain on/off. Unchecked track is a muted surface; checked track is [ColorScheme.primary].
+     * plain on/off. Unchecked track is a muted surface; checked track is the theme `primary`.
      */
     @Composable
     fun primaryColors(): SlideToggleColors {
@@ -178,7 +178,7 @@ data class SlideToggleColors(
 /**
  * A compact rectangular slide switch — physical toggle aesthetic at desktop density.
  *
- * LTR layout (checked = grip slides right, matching Material and every other switch in the app):
+ * LTR layout (checked = grip slides right, matching Material's `Switch`):
  * ```
  * |||.RED....|     off — grip left, red exposed rail on the right
  * |....GREEN.|||   on  — green exposed rail on the left, grip right

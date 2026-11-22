@@ -74,8 +74,8 @@ import kotlinx.coroutines.launch
  *                  so the fade reads as content dissolving into the surface. Defaults to the theme
  *                  surface; a [TooltipCard] passes its own card color, etc.
  * @param fadeHeight Thickness of each edge fade band. Larger values read as a stronger “more below
- *                  / above” cue (rail tool bands use a drastic height so occluded buttons cannot
- *                  look simply missing).
+ *                  / above” cue (a narrow band of tool buttons wants a drastic height, so a
+ *                  half-hidden button cannot look simply missing).
  * @param fadeTop When true, paint a top fade while [scrollState] can scroll backward.
  * @param fadeBottom When true, paint a bottom fade while more content remains below.
  * @param fillWidth When true (default) the scrolling column fills the available width — right for a
@@ -84,19 +84,19 @@ import kotlinx.coroutines.launch
  * @param verticalArrangement Spacing/arrangement of the scrolling children; defaults to
  *                  [Arrangement.Top] (no inter-child gap), matching a plain `Column`.
  * @param horizontalAlignment Cross-axis alignment of children; default [Alignment.Start]. Pass
- *                  [Alignment.CenterHorizontally] when embedding in a NavigationRail so the scroll
- *                  band lines up with pinned siblings that the rail centers itself.
+ *                  [Alignment.CenterHorizontally] when embedding in a NavigationRail, so the
+ *                  scrolling band lines up with pinned siblings that the rail centers itself.
  * @param scrollCue When true, a small chevron rides in each fade band while there is more that way,
  *                  and **clicking it pages** the column that way. The fade alone says "this
- *                  continues"; the chevron says "you can get there", and has to keep that promise:
- *                  in the Simulator rail it was drawn only, and a tester on a short window clicked
- *                  it and got nothing — the wheel was the only way down (2026-10-06).
+ *                  continues"; the chevron says "you can get there", and has to keep that promise.
+ *                  A chevron that is only drawn invites a click that does nothing, which leaves
+ *                  the wheel as the only way down on a short window.
  * @param scrollbar When true, a slim thumb floats over the right edge whenever the content
  *                  overflows, sized and positioned to the scroll. It is drawn, not laid out, so it
  *                  takes no width and never pushes content. The fade says "there is more"; the
- *                  thumb says "and this is how much, and where you are" — a reader who never tried
- *                  scrolling a hover card had no way to know it could. Default off; hover cards,
- *                  a few dialogs and every rail panel ([RailPanelScrollColumn]) opt in.
+ *                  thumb says "and this is how much, and where you are". Without it, a reader who
+ *                  never tries to scroll a hover card has no way to know it can. Default off;
+ *                  hover cards, dialogs and side panels ([RailPanelScrollColumn]) opt in.
  * @param scrollbarGutter End padding reserved for the thumb, so it rides beside the content rather
  *                  than over its last characters. Zero (the default) is right for a hover card,
  *                  whose own padding is the gutter; a dialog whose content runs to the column's
@@ -167,13 +167,13 @@ fun FadingScrollColumn(
 }
 
 /**
- * The scroll column of a rail section's whole panel — Forecaster, Assumptions, Transforms, Risk,
- * Sensitivity, Region, Guardrails: a [FadingScrollColumn] that always wears the [ScrollbarThumb],
- * with a gutter so the thumb rides beside the content and never over the accordion strips'
- * chevrons at its right edge. One wrapper owns that framing, so no panel decides it alone.
+ * The scroll column of a whole side panel: a [FadingScrollColumn] that always wears the
+ * [ScrollbarThumb], with a gutter so the thumb rides beside the content and never over controls at
+ * its right edge, such as accordion chevrons. One wrapper owns that framing, so no panel decides it
+ * alone.
  *
- * A design partner asked for scrollbars on the charts and the Roth assumptions (2026-10-27): the
- * fade said the panel went on, and nothing said how far or let him grab it.
+ * A panel full of charts or long forms needs more than the fade: the fade says the panel goes on,
+ * but only a thumb says how far, and lets the reader grab it.
  */
 @Composable
 fun RailPanelScrollColumn(
@@ -192,13 +192,13 @@ fun RailPanelScrollColumn(
 
 /**
  * A fixed-size viewport that scrolls [content] vertically and wears the [ScrollbarThumb]: for a
- * region a drag has shrunk below its content (an accordion section, a seam region), where the
- * chart cut off at the bottom was otherwise the only sign it scrolled. [modifier] sets the size.
+ * region a drag has shrunk below its content (an accordion section, a split pane), where a chart
+ * cut off at the bottom would otherwise be the only sign it scrolls. [modifier] sets the size.
  *
  * The content stops [SCROLLBAR_HIT_WIDTH] short of the edge, so the thumb rides in its own gutter:
- * drawn over the content, it covered the right edge of a chart card and of the Modification card
- * (owner, 2026-10-28). Every thumb sits beside content, never on it — the rail panels reserve the
- * same gutter ([RailPanelScrollColumn]), the dossier pane and hover cards have padding for it.
+ * drawn over the content, it would cover the right edge of a card. Every thumb sits beside content,
+ * never on it: side panels reserve the same gutter ([RailPanelScrollColumn]), and padded panes and
+ * hover cards have padding for it.
  */
 @Composable
 fun ScrollbarBox(
@@ -272,10 +272,9 @@ private fun DrawScope.drawTopChevron(cueColor: Color) {
  * content rather than taking width. Only its own narrow strip takes the pointer; everything else
  * passes through to the content under it.
  *
- * The one scrollbar in the app. [FadingScrollColumn] draws it when asked, and the dossier's
- * centered editor pane always does: a design partner on Windows lost an item editor's OK button
- * below the fold of that pane with nothing on screen to say it scrolled (2026-10-05). Until then
- * the thumb was drawn only, a readout nobody could grab.
+ * The kit's one scrollbar. [FadingScrollColumn] draws it when asked; a host's own scrolling pane
+ * can call it directly. A pane whose content can run below the fold should always wear one, or a
+ * button below the fold (a dialog's OK, say) can be lost with nothing on screen to say it scrolls.
  */
 @Composable
 fun BoxScope.ScrollbarThumb(scrollState: ScrollState) {
@@ -384,8 +383,8 @@ private const val SCROLL_PAGE_FRACTION: Float = 0.85f
 /**
  * The bottom "there is more" cue of a scrolling viewport: a fade into [fadeColor], and a chevron
  * in it when [chevron] — the fade says the content continues, the chevron says scrolling gets
- * there. The one implementation: [FadingScrollColumn] and the dossier's centered editor pane
- * both draw through it (the pane used to carry its own copy).
+ * there. The one implementation: [FadingScrollColumn] draws through it, and a host's own
+ * scrolling pane can too, so every bottom cue looks the same.
  */
 fun DrawScope.drawBottomScrollCue(
     fadeColor: Color,
@@ -422,8 +421,8 @@ fun DrawScope.drawBottomScrollCue(
 }
 
 /**
- * Lets something riding a scroller's bottom edge — a [PinnedPreviewHost]'s sticky card — stand
- * the scroller's own bottom fade down while it rides. The card draws its own "more below" cue
+ * Lets something riding a scroller's bottom edge, such as a sticky card pinned there, stand the
+ * scroller's own bottom fade down while it rides. The card draws its own "more below" cue
  * above itself; the scroller's fade would otherwise wash out the card's bottom row.
  */
 class BottomFadeStandDown {
@@ -437,12 +436,12 @@ val LocalBottomFadeStandDown = staticCompositionLocalOf<BottomFadeStandDown?> { 
 fun scrollCueColor(): Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
 
 /**
- * When the [ScrollbarThumb]s show — Advanced → Application **Scrollbars**. Every thumb in the app
- * reads [LocalScrollbarMode], so the choice is one value read in one place.
+ * When the [ScrollbarThumb]s show, typically a user setting. Every thumb reads
+ * [LocalScrollbarMode], so the choice is one value read in one place.
  *
- * Until the person chooses, the mode follows **Power user** ([ScrollbarMode.defaultFor]): a typical
- * user is the reader who did not know a panel scrolled, so their scrollbars always show; a power
- * user knows, and gets the quieter macOS habit.
+ * [ScrollbarMode.defaultFor] gives a sensible default before the person chooses: a typical user is
+ * the reader who may not know a panel scrolls, so their scrollbars always show; an experienced user
+ * knows, and gets the quieter macOS habit.
  */
 enum class ScrollbarMode {
     /** Shown whenever the content overflows. */
@@ -460,7 +459,7 @@ enum class ScrollbarMode {
     }
 }
 
-/** The person's [ScrollbarMode], already resolved against Power user. Provided by `AppFrame`. */
+/** The person's [ScrollbarMode], already resolved against any default. The host provides it. */
 val LocalScrollbarMode = compositionLocalOf { ScrollbarMode.Always }
 
 /**
@@ -488,7 +487,7 @@ private val SCROLLBAR_INSET: Dp = 3.dp
 /** A very long list would otherwise shrink the thumb to a dot that reads as a speck, not a control. */
 private val SCROLLBAR_MIN_THUMB: Dp = 18.dp
 
-/** Visible against both the frosted chart tip and a themed surface card without shouting over content. */
+/** Visible against both a frosted chart tooltip and a themed surface card without shouting over content. */
 private const val SCROLLBAR_THUMB_ALPHA: Float = 0.45f
 
 /** Hovered or held: the thumb says it is a control. */
@@ -496,8 +495,8 @@ private const val SCROLLBAR_THUMB_ACTIVE_ALPHA: Float = 0.7f
 
 /**
  * Width of the strip that takes the pointer — wider than the thumb, which is too thin to hit. Kept
- * under the 16 dp content padding the dossier pane uses, so it never covers a control. Also the
- * gutter a column reserves when its content runs to the edge ([RailPanelScrollColumn], the tool dialogs).
+ * under a typical 16 dp content padding, so it never covers a control. Also the gutter a column
+ * reserves when its content runs to the edge ([RailPanelScrollColumn], a padded dialog).
  */
 val SCROLLBAR_HIT_WIDTH: Dp = 12.dp
 

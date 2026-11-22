@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 
 /**
  * [signToggleAt] lets a user type `-` anywhere in a numeric field to flip the whole value's sign
- * (the way k/m/b scale its magnitude), so negative entry no longer requires positioning the caret
+ * (the way k/m/b scale its magnitude), so negative entry does not require positioning the caret
  * before the first digit. Guards that it fires only on a lone `-` insertion into a committed number.
  */
 class SignToggleTest {
@@ -58,7 +58,7 @@ class SignToggleTest {
 
     @Test
     fun `signToggleAt reports zero as -0 so the composable routes it to the text toggle`() {
-        // The field detects the zero case with Kotlin `== 0.0` (true for -0.0), the kept-scaffold path.
+        // The field detects the zero case with Kotlin `== 0.0` (true for -0.0) and keeps the typed text.
         assertTrue(signToggleAt(newText = "0-", oldText = "0") == 0.0)
         assertTrue(signToggleAt(newText = "0.0000-", oldText = "0.0000") == 0.0)
     }

@@ -7,8 +7,8 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TestTimeSource
 
 /**
- * The type-to-select rules shared by every picker — pinned on the birth-month list a design partner was on
- * when they typed "M" and nothing happened.
+ * The type-to-select rules shared by every picker, pinned on a list of month names: typing "M"
+ * must land on March.
  */
 class TypeAheadMatcherTest {
 

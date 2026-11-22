@@ -7,6 +7,16 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import plusauri.ui.IntegerInput
 
+/** Width of a [YearInput] sized for a four-digit year — the default, and what a caller that adds
+ * a modifier of its own should chain onto rather than lose. */
+val YearInputWidth = 72.dp
+
+/**
+ * Width of an integer entry sized for two digits, such as an age or a count of years. Use it
+ * rather than writing `48.dp` inline, so every two-digit field in a form is the same width.
+ */
+val TwoDigitInputWidth = 48.dp
+
 /**
  * A validated integer input for entering a year, constrained to [yearRange].
  *
@@ -22,19 +32,9 @@ import plusauri.ui.IntegerInput
  * @param label         Floating label shown on the border when the field has a value or focus.
  * @param placeholder   Hint shown when the field is empty.
  * @param enabled       When false the field is non-interactive.
- * @param modifier      Applied to the underlying text field. Defaults to [width] sized for a
- *                      4-digit year; pass an explicit modifier to override.
+ * @param modifier      Applied to the underlying text field. Defaults to [YearInputWidth],
+ *                      sized for a 4-digit year; pass an explicit modifier to override.
  */
-/** Width of a [YearInput] sized for a four-digit year — the default, and what a caller that adds
- * a modifier of its own should chain onto rather than lose. */
-val YearInputWidth = 72.dp
-
-/**
- * Width of an integer entry sized for two digits — an age, a count of years. The dossier editors
- * had been writing `48.dp` inline for this; name it here, beside the year's, and reach for it.
- */
-val TwoDigitInputWidth = 48.dp
-
 @Composable
 fun YearInput(
     value: Int?,

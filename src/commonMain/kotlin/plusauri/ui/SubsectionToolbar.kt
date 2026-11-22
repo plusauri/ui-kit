@@ -11,16 +11,18 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
 /**
- * Shared chrome for pastel-flat **subsection toolbars** (Assumptions Growth/Taxes/…, Risk Current /
- * Sensitivities, …). Call sites use [MultiButtonSelect] with [equalSlots] = true and
- * [buttonSize] = [ButtonSize], and build each [ButtonData.buttonImage] via [subsectionToolbarIcon]
- * so icon pitch, surface size, and art fill stay consistent.
+ * Shared chrome for **subsection toolbars**: a row of large illustrated toggles that switches a
+ * panel between its parts (for example a settings panel's Growth / Taxes / Fees pages). The icons
+ * are flat illustrations in soft pastel colors, each drawn on a square rounded badge (a "plate")
+ * that fills nearly the whole button. Call sites use [MultiButtonSelect] with `equalSlots = true`
+ * and `buttonSize = [ButtonSize]`, and build each [ButtonData.buttonImage] via
+ * [subsectionToolbarIcon] so icon pitch, surface size, and art fill stay consistent.
  */
 object SubsectionToolbar {
     /** Clickable [ToggleImageButton] surface (and selection indicator width). */
     val ButtonSize: Dp = 58.dp
 
-    /** Pastel plate art inside the surface — slight inset so the rim reads. */
+    /** Icon art inside the surface — a slight inset so the plate's rim reads. */
     val IconSize: Dp = 55.dp
 
     /** Gap between equal-width toolbar slots. */
@@ -28,7 +30,7 @@ object SubsectionToolbar {
 }
 
 /**
- * [ButtonImage] that paints a pastel-flat drawable at [SubsectionToolbar.IconSize], filling nearly
+ * [ButtonImage] that paints a subsection icon at [SubsectionToolbar.IconSize], filling nearly
  * the full [SubsectionToolbar.ButtonSize] surface. [contentDescription] is also the button's hover
  * tip when its toolbar passes none ([ButtonData.hoverName]). Not itself a composable entrypoint — the
  * [ButtonImage.Content] lambda is composed later by [ToggleImageButton].

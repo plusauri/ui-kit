@@ -47,7 +47,7 @@ internal const val CollapsibleSectionBlurb =
         "ControlGroup is the plain rounded frame that groups a few controls."
 
 internal const val SeamsBlurb =
-    "The grabber family. CollapsibleDetailDivider folds a section an item carries. " +
+    "The grabber family. CollapsibleDetailDivider folds an item's optional details. " +
         "CollapseGrabberDivider and RegionSeamDivider fold or resize a region; PanelSeamDivider folds and " +
         "sizes a side panel on either edge; SplitSeam moves the " +
         "split between two panes; ResetToFullButton puts a region back to its full size."
@@ -116,7 +116,7 @@ fun CollapsibleSectionPage() = PageColumn {
 @Composable
 fun SeamsPage() = PageColumn {
     var detailCollapsed by remember { mutableStateOf(true) }
-    ExampleCard("CollapsibleDetailDivider (a carried section arrives folded)") {
+    ExampleCard("CollapsibleDetailDivider (optional details arrive folded)") {
         Text("A loan, with its details folded behind the divider.", style = MaterialTheme.typography.bodyMedium)
         CollapsibleDetailDivider(
             collapsed = detailCollapsed,

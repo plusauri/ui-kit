@@ -14,9 +14,8 @@ import androidx.compose.ui.input.key.type
  * The keys a list or a row of choices acts on beyond the arrows: Ctrl-[LIST_DOWN] and Ctrl-[LIST_UP]
  * step through it as ↓ and ↑ do, and [TOGGLE_ALL] is the All / Clear toggle on a bulk chip row.
  *
- * The kit owns these so a control walks without the product's shortcut table. The product documents
- * the same keys there (`tutil.shortcuts.ControlKey`), and `ListKeysAgreeTest` in `:tutil-ui` holds the
- * two to the same glyphs and Compose keys.
+ * The kit owns these so a control walks without a host shortcut table. A host that lists its
+ * shortcuts should read the keys from here, or test that its list agrees.
  */
 object ListKeys {
     const val LIST_DOWN: Char = 'N'
@@ -44,10 +43,10 @@ val KeyEvent.isEnterKey: Boolean get() = key == Key.Enter || key == Key.NumPadEn
  * This key as a list of choices reads it: plain Ctrl-N ([ListKeys.LIST_DOWN]) is Down and plain
  * Ctrl-P ([ListKeys.LIST_UP]) is Up, as in Emacs, macOS text and most pickers; every other key is
  * itself. A menu or select list matches on this rather than [key], so the two chords move through
- * every list the same way, and the Help table's `ControlBinding.ListStep` row says so.
+ * every list the same way.
  *
- * A focused list consumes them, so they never reach the window. Neither is an app shortcut: Peek
- * moved off Ctrl-P to Ctrl-comma (2026-10-14) so that Ctrl-P can be ↑ wherever ↑ walks.
+ * A focused list consumes them, so they never reach the window. A host should therefore not bind
+ * Ctrl-N or Ctrl-P to a window-level shortcut, so that each can be ↓ / ↑ wherever the arrows walk.
  */
 val KeyEvent.listKey: Key get() = when {
     !isCtrlPressed || isAltPressed || isMetaPressed || isShiftPressed -> key
@@ -71,8 +70,8 @@ val KeyEvent.listStep: Key? get() {
 
 /**
  * The key a walk reads: [listStep] when this is one, else [key]. Every handler whose ↑ / ↓ move
- * between controls matches on this, so Ctrl-N / Ctrl-P walk wherever the arrows do (owner,
- * 2026-10-14: the arrows are a reach on a laptop).
+ * between controls matches on this, so Ctrl-N / Ctrl-P walk wherever the arrows do, because the
+ * arrows are a reach on a laptop keyboard.
  */
 val KeyEvent.walkKey: Key get() = listStep ?: key
 

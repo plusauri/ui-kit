@@ -8,25 +8,25 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 
-/** Brand gold — not the Material `primary` (that's blue); used for accents like the Region pin. */
+/** Brand gold — not the Material `primary` (that's blue); used for accents such as a pinned marker. */
 val PlusauriGold = Color(0xFFC89B2C)
 val PlusauriGoldLight = Color(0xFFE0B94D)
 /**
  * One step *down* the gold ramp from [PlusauriGold]. Brand gold is only ~2.5:1 on the near-white
  * paper surface; this darkens it enough for a fine mark (a thin glyph, a hairline) to clear the
- * 3:1 contrast floor in light theme while still reading as gold. See [helpMarkColor].
+ * 3:1 contrast floor in light theme while still reading as gold.
  */
 val PlusauriGoldDeep = Color(0xFFB08823)
 val PlusauriGoldContainer = Color(0xFFF4DFAD)
 /** Dark-theme companion to [PlusauriGoldContainer] — advanced/caution chrome fill. */
 val PlusauriGoldContainerDark = Color(0xFF4E3910)
-/** Deep graphite — Material `secondary` in light scheme; useful as a solid "hole" under gold marks. */
 /**
  * Ink for text sitting **on** [PlusauriBlueLight] in the dark theme — a near-black that keeps the
  * pale blue readable where white would glare.
  */
 val PlusauriOnBlueLight = Color(0xFF1A202C)
 
+/** Deep graphite — Material `secondary` in light scheme; useful as a solid "hole" under gold marks. */
 val PlusauriGraphite = Color(0xFF34271E)
 private val PlusauriGraphiteContainer = Color(0xFFE9DED2)
 val PlusauriBlue = Color(0xFF4489E2)
@@ -56,15 +56,11 @@ private val PlusauriDark = Color(0xFF141210)
  *
  * [primaryContainer] (`PlusauriBlueContainer`) is too close to cool content cards (lavender/gray
  * surfaces) to mark section boundaries. This is a step more blue — still pastel, not solid primary —
- * so Forecast Detail / Simulation Summary (and sibling) bars read as chrome against expanded content.
+ * so section bars read as chrome against expanded content.
  */
 /*
- * **Mirrored in `kotlin/website/src/main/resources/static/site.css`** as
- * `--plusauri-collapsible-bar` / `--plusauri-on-collapsible-bar` (+ their dark-block variants), and
- * used there by the catalog surface chips and by the Learning Center's sticky lesson-outline strip.
- * There is no token export between Kotlin and CSS today, so these four values have a second copy:
- * change one side and change the other. The CSS also adds a `-active` shade (`#9bb8de`) with no
- * Compose counterpart, for the "this is the current one" state those web surfaces need.
+ * A web page that wants to match these bars has to copy the four values below into its own CSS:
+ * there is no token export from Kotlin to CSS, so change both sides together.
  */
 private val PlusauriCollapsibleBar = Color(0xFFB4CAE6)
 private val PlusauriOnCollapsibleBar = Color(0xFF0F2744)
@@ -92,10 +88,10 @@ private val PlusauriNestedCollapsibleBarDark = Color(0xFF5C4030)
 private val PlusauriOnNestedCollapsibleBarDark = Color(0xFFFFE6CC)
 
 /**
- * Header chrome for a collapsible **nested inside** a top-level [collapsibleHeaderBarColor] section
- * (Guardrails “Your spend needs & incomes”, Bird's Eye People & events / Assets & liabilities).
- * Warm peach (not soft-sky) so nested bars read as contained chrome. **Single source** for fill —
- * [CollapsibleSection] and [ResizableSection] both call this; do not hardcode nest peach elsewhere.
+ * Header chrome for a collapsible **nested inside** a top-level [collapsibleHeaderBarColor] section.
+ * Warm peach (not soft-sky) so nested bars read as contained chrome. **Single source** for the fill:
+ * [CollapsibleSection] reads it through [collapsibleChromeColors]; do not hardcode nest peach
+ * elsewhere.
  */
 fun nestedCollapsibleHeaderBarColor(scheme: ColorScheme): Color =
     if (scheme.background.luminance() < 0.5f) PlusauriNestedCollapsibleBarDark else PlusauriNestedCollapsibleBar
@@ -105,18 +101,18 @@ fun nestedCollapsibleHeaderOnBarColor(scheme: ColorScheme): Color =
     if (scheme.background.luminance() < 0.5f) PlusauriOnNestedCollapsibleBarDark else PlusauriOnNestedCollapsibleBar
 
 /*
- * "Where it is in the app" card — the Glossary's answer to *where do I set this, and where does it
- * show*. Pale butter yellow rather than [PlusauriCream]: cream sits within a hair of the paper page
- * tokens (the phase-bar note below found the same), and this card has to be noticed by a reader who
- * did not know to look for it. A soft-gold border holds its edge; the dark pair is the same idea at
- * low luminance, bordered by the dimmed underbar gold.
+ * A "where to find it" card: a small note that tells the reader where something is set or shown.
+ * Pale butter yellow rather than [PlusauriCream]: cream sits within a hair of the paper page tokens
+ * (see the phase chrome below), and this card has to be noticed by a reader who did not know to
+ * look for it. A soft-gold border holds its edge; the dark pair is the same idea at low luminance,
+ * bordered by the dimmed underbar gold.
  */
 private val PlusauriWhereCard = Color(0xFFFFF4CF)
 private val PlusauriWhereCardBorder = Color(0xFFEBD08F)
 private val PlusauriWhereCardDark = Color(0xFF2B2414)
 private val PlusauriWhereCardBorderDark = PlusauriGoldSoftDark
 
-/** Fill for the Glossary's *Where it is in the app* card. */
+/** Fill for a "where to find it" card. */
 fun whereCardColor(scheme: ColorScheme): Color =
     if (scheme.background.luminance() < 0.5f) PlusauriWhereCardDark else PlusauriWhereCard
 
@@ -125,14 +121,14 @@ fun whereCardBorderColor(scheme: ColorScheme): Color =
     if (scheme.background.luminance() < 0.5f) PlusauriWhereCardBorderDark else PlusauriWhereCardBorder
 
 /*
- * Phase-bar chrome ([CollapsibleHeaderChrome.Phase]) — the accordion bar over one phase of a phased
- * generator (healthcare, living expenses). Cool ice blue-gray rather than the nest peach: a phase
+ * Phase chrome ([CollapsibleHeaderChrome.Phase]) — the accordion bar over one step of a sequence,
+ * such as one stage of a multi-stage editor. Cool ice blue-gray rather than the nest peach: such a
  * stack sits inside an editor dialog, not inside a soft-sky section bar, so the "contained, warm"
  * argument for peach does not apply, and three peach bands over a form read louder than the
  * fields they head. The fill is pale enough that it needs a **border** to hold its edge against
  * the page, and the chevron takes a **separate, softer tint** than the title so the mark reads as
- * furniture rather than as a second word. Chosen 2026-09-13 over a soft-cream alternative, which
- * sat within a hair of the paper/cream page tokens and disappeared into them.
+ * furniture rather than as a second word. Not soft cream: cream sits within a hair of the
+ * paper/cream page tokens and disappears into them.
  */
 private val PlusauriPhaseBar = Color(0xFFE8EFF7)
 private val PlusauriPhaseBarBorder = Color(0xFFCBDCEF)
@@ -145,11 +141,12 @@ private val PlusauriOnPhaseBarDark = Color(0xFFDCE6F2)
 private val PlusauriPhaseBarIconDark = Color(0xFFA9BBD3)
 
 /**
- * Lemon chiffon for the Learning Center's "worked example" arrival strip (light).
+ * Lemon chiffon for a "worked example" arrival strip (light): a one-line banner at the top of a
+ * page the reader arrived at from an example.
  *
  * Warm and very pale — a note, not a warning. It has to catch the eye for one read and then be
  * dismissed, so it sits brighter than [collapsibleHeaderBarColor] chrome but well short of the
- * tertiary/error tints the app reserves for "something needs your attention". Lemon rather than the
+ * tertiary/error tints a theme reserves for "something needs your attention". Lemon rather than the
  * nest peach so it does not read as a section header that lost its section, and chiffon-soft rather
  * than a saturated yellow so it never reads as a caution band.
  */
@@ -173,7 +170,7 @@ fun workedExampleStripOnColor(scheme: ColorScheme): Color =
  * slot is warm — cream pill, soft-gold underbar — so the row reads as brand rather than as gray
  * Material, and the **selected** slot keeps the cool blue `primaryContainer` / `primary` pair.
  * Warm-vs-cool is the second channel beside the underbar strength, so selection stays legible even
- * for a reader who cannot separate the hues. Decided 2026-09-12 ("Option 2: warm glow").
+ * for a reader who cannot separate the hues.
  */
 fun toggleDeselectedSurfaceColor(scheme: ColorScheme): Color =
     if (scheme.background.luminance() < 0.5f) PlusauriCreamDark else PlusauriCream
@@ -245,11 +242,10 @@ fun collapsibleChromeColors(
 }
 
 /**
- * Left/right inset fraction for content nested under a top-level collapsible bar (Bird's Eye Detail,
- * Guardrails Studies / About You, Assumptions first-year estimates, …). About **1%** of the host
- * width (half of the earlier ~2% inset) so nested panels still read as contained composition
- * without ceding much usable width. Prefer this shared constant over one-off horizontal padding
- * so nesting feel stays consistent as more panels adopt it.
+ * Left/right inset fraction for content nested under a top-level collapsible bar. About **1%** of
+ * the host width, so nested panels still read as contained composition without ceding much usable
+ * width. Prefer this shared constant over one-off horizontal padding so nesting feel stays
+ * consistent across panels.
  */
 const val NestedCollapsibleHorizontalInsetFraction = 0.03f * 0.35f
 
@@ -300,10 +296,9 @@ val PlusauriDarkColorScheme: ColorScheme = darkColorScheme(
 )
 
 /**
- * The product's Material theme in one call, so a second window (the desktop crash dialog, which is
- * composed outside [AppFrame]) is painted with the same palette as the first rather than Material's
- * purple defaults. [AppFrame] is the primary user; anything else that opens its own top-level
- * composition should go through here too.
+ * The Plusauri Material theme in one call. Wrap every top-level composition in it (the main window,
+ * and any second window such as an error dialog composed on its own), so each is painted with the
+ * same palette rather than Material's purple defaults.
  */
 @Composable
 fun PlusauriTheme(isDarkTheme: Boolean, content: @Composable () -> Unit) {

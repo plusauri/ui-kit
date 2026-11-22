@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test
 /**
  * Clicking into a [NumericInput] selects its value, so the first keystroke replaces it.
  *
- * A design partner, reviewing the cash rate: "when I click in here, I'd expect to see that just
- * blank out or to highlight it and overwrite it." The trap is ordering: a click focuses the field
+ * A user who clicks into a number field expects to overwrite the value, not to edit around it.
+ * The trap is ordering: a click focuses the field
  * and *then* places its caret, so a selection made on focus alone is wiped by the click that made
  * it. The assertion is therefore on what typing does after a real click, not on the focus handler.
  */

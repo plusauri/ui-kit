@@ -45,8 +45,9 @@ import androidx.compose.ui.graphics.Shape
 
 /**
  * Shared hover-intent delay for [HoverTooltip]: brief sustained hover before a card opens, so a
- * sweep across dense targets (slider triangles, toolbar toggles) does not erupt a tip. Same idea as
- * [HoverDetailPopup]'s 300 ms intent delay; this family is 200 ms because the cards are smaller.
+ * sweep across dense targets (slider markers, toolbar toggles) does not erupt a tip. Same idea as
+ * [HoverDetailOptions.intentDelayMs], which defaults to zero because a detail card placed beside its
+ * row covers nothing the hand is near; a hint usually opens over its neighbors, so it waits.
  *
  * Pass a multiple at a call site that needs more dwell (e.g. a long tip sitting over an animation).
  */
@@ -57,23 +58,22 @@ const val HoverTooltipIntentMs = 200L
  *
  * Critical on desktop: opening a [Popup] is a separate OS window and fires a **spurious**
  * [androidx.compose.ui.input.pointer.PointerEventType.Exit] on the main window even though the
- * cursor never moved (see `doc/technical-choices/help-icon-tooltip.md`). Synchronous dismiss on
- * Exit causes the classic tooltip flutter loop. The grace swallows that artifact; a genuine leave
+ * cursor never moved. Synchronous dismiss on Exit causes the classic tooltip flutter loop. The grace swallows that artifact; a genuine leave
  * still closes after the delay.
  */
 private const val HoverTooltipCloseMs = 300L
 
 /**
- * After a place-below interactive card opens, ignore unhover for this long so the desktop
- * Popup-creation Exit cannot immediately close and re-open the card (slow flash loop).
+ * After an interactive card placed beside its anchor opens, ignore unhover for this long so the
+ * desktop Popup-creation Exit cannot immediately close and re-open the card (slow flash loop).
  * Long enough to outlive the spurious Exit; short enough that a real leave still dismisses.
  */
 private const val PlaceBelowOpenStickyMs = 500L
 
 /**
- * Inner padding for Family C one-line / short-prose hints ([HoverTooltip] string overload,
- * [OverflowTooltipText]). Rich Family B cards pad themselves. 12/8, not 8/4 — a sentence
- * at 8/4 reads as text pressed against the card edge.
+ * Inner padding for one-line and short-prose hints (Family C, as defined on [TipPlacement]: the
+ * [HoverTooltip] string overload, [OverflowTooltipText]). Rich cards (Family B) pad themselves.
+ * 12/8, not 8/4: a sentence at 8/4 reads as text pressed against the card edge.
  */
 val HoverTooltipHintPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
 
@@ -83,8 +83,8 @@ val HoverTooltipHintPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
  * [OverflowTooltipText] — which only shows when a label is *clipped* — this always shows on hover, for
  * affordances whose meaning isn't self-evident from the icon alone.
  *
- * Uses a plain hover-driven [Popup] (the same approach as [OverflowTooltipText] / [HelpIcon]) rather
- * than Material3's `TooltipBox`, which the app avoids for its measurement quirks and version churn.
+ * Uses a plain hover-driven [Popup] (the same approach as [OverflowTooltipText]) rather than
+ * Material3's `TooltipBox`, which the kit avoids for its measurement quirks and version churn.
  *
  * Show/hide follows the anti-flutter model shared with [HoverDetailPopup]: hover-intent delay, close
  * grace for OS-spurious exits, and [androidx.compose.foundation.hoverable] rather than raw Enter/Exit.
@@ -153,9 +153,9 @@ fun HoverTooltip(
  *                **and** it obeys the global Alt / hover-details gate ([hoverDetailsEnabled]) — see
  *                the `gated` note in the body for why rich cards suppress but hints do not.
  * @param placement Where the card goes — see [TipPlacement]. Null derives it: beside the anchor,
- *                below when [placeBelow] else above, centered. An interactive card is **not** placed
- *                under the pointer by default any more — that put a 420 dp year card over the axis
- *                being swept (`hover-tip-placement.md` §4); pass [TipPlacement.UnderPointer] to ask
+ *                below when [placeBelow] else above, centered. An interactive card is **not**
+ *                placed under the pointer by default, because a large card there covers what the
+ *                pointer is sweeping (a chart axis, say); pass [TipPlacement.UnderPointer] to ask
  *                for it. Beside-anchor interactive cards get the open-sticky guard against the
  *                desktop Popup-creation Exit.
  * @param selectable When true (typically with [interactive]), [TooltipCard] does not wrap content in
@@ -180,10 +180,10 @@ fun HoverTooltip(
     containerColor: Color? = null,
     /**
      * For an [interactive] card: dwell with the pointer still, card up, before it **latches** into
-     * the frozen fill ([TipFrozenFill]) — the same "settled, come and copy" cue every other hover
-     * card gives. A beside-anchor card never moves, so the latch here is the cue and the promise
-     * (it stays latched until it closes), not a change of placement. Default: the charts' own
-     * [ChartTipCopyLatchMs] for interactive cards, none for hints.
+     * the frozen fill ([TipFrozenFill]), the same "settled, come and copy" cue every other hover
+     * card gives (see "latched" on [TipPlacement]). The card does not follow the pointer here, so
+     * the latch is the cue and the promise (it stays latched until it closes), not a change of
+     * placement. Default: [ChartTipCopyLatchMs] for interactive cards, none for hints.
      */
     latchDelayMs: Long = if (interactive) ChartTipCopyLatchMs else 0L,
     /** Told when the card opens / closes, for a host that tints its strip while a card is up. */
@@ -192,7 +192,7 @@ fun HoverTooltip(
     content: @Composable () -> Unit,
 ) {
     var visible by remember { mutableStateOf(false) }
-    // Rich interactive cards are one-at-a-time app-wide (see [ChartTipOwner]); hints are not — a
+    // Rich interactive cards are one at a time (see [ChartTipOwner]); hints are not: a
     // hint on a card's own copy button must not close the card under it.
     val owner = LocalChartTipOwner.current
     val token = remember { Any() }
@@ -200,14 +200,15 @@ fun HoverTooltip(
     LaunchedEffect(held, interactive) { if (interactive && !held && visible) visible = false }
     LaunchedEffect(visible) { if (!visible) owner.release(token) }
     DisposableEffect(token) { onDispose { owner.release(token) } }
-    // After open, place-below cards ignore unhover briefly so OS Popup Exit cannot flash-loop.
+    // After open, beside-anchor interactive cards ignore unhover briefly so OS Popup Exit cannot
+    // flash-loop.
     var suppressClose by remember { mutableStateOf(false) }
     val anchorSource = remember { MutableInteractionSource() }
     val anchorHovered by anchorSource.collectIsHoveredAsState()
     val popupSource = remember { MutableInteractionSource() }
     val popupHovered by popupSource.collectIsHoveredAsState()
 
-    // Pointer in anchor-local coords for under-cursor placement (interactive, not place-below).
+    // Pointer in anchor-local coords, for the placements that use it (under or beside the pointer).
     val pointerPos = remember { mutableStateOf(Offset.Zero) }
 
     val resolvedPlacement = placement
@@ -255,8 +256,8 @@ fun HoverTooltip(
         }
     }
 
-    // Place-below interactive: after open, ignore unhover long enough for the desktop OS Exit
-    // from Popup creation to pass (help-icon-tooltip.md) without flash-closing.
+    // Beside-anchor interactive: after open, ignore unhover long enough for the desktop OS Exit
+    // from Popup creation to pass without flash-closing.
     LaunchedEffect(visible, placeBelowInteractive) {
         if (visible && placeBelowInteractive) {
             suppressClose = true
@@ -268,7 +269,7 @@ fun HoverTooltip(
     }
 
     // Close only after both anchor and popup are un-hovered for the grace window — and not while
-    // [suppressClose] is active (place-below open sticky). A gate flip (Alt down) closes at once,
+    // [suppressClose] is active (the beside-anchor open sticky). A gate flip (Alt down) closes at once,
     // outranking the sticky window: the card must get out of the way the instant Alt is held, which
     // is the same rule [HoverDetailPopup] follows.
     LaunchedEffect(visible, anchorHovered, popupHovered, gated, suppressClose) {
@@ -337,19 +338,23 @@ fun HoverTooltip(
 
 /**
  * Global height cap for a tooltip card's contents. Content taller than this scrolls inside the card's
- * bottom-fading container ([TooltipCard]) instead of growing to swallow the window — the runaway a
- * long line-item breakdown (e.g. a holding-heavy Obligation Sales) would otherwise produce.
+ * bottom-fading container ([TooltipCard]) instead of growing to swallow the window, the runaway a
+ * long line-item breakdown (a list of many items, say) would otherwise produce.
  */
 val TooltipMaxHeight: Dp = 320.dp
 
 /**
- * The shared chrome for **every Compose hover card** — Family B ([HoverTooltip] rich, [HoverDetailPopup],
- * risk-band readout) and Family C (one-line [HoverTooltip], [OverflowTooltipText]). Canvas Family A
- * stays drawn (`drawChartTooltipCard`). Click-help (`HelpTooltipCard`) is not a hover tip.
+ * The shared chrome for **every Compose hover card**: Family B (rich [HoverTooltip],
+ * [HoverDetailPopup]) and Family C (one-line [HoverTooltip], [OverflowTooltipText]); the families
+ * are defined on [TipPlacement]. Family A cards are drawn on a canvas by their host, with the same
+ * tokens ([ChartTipFill], [ChartTipBorder], [TipDepth]).
  *
- * Fill is theme [androidx.compose.material3.ColorScheme.surface] plus a 1 dp [androidx.compose.material3.ColorScheme.outline]
- * and the existing shadow — a lightness step + border, not hue, so the card lifts off the panel
- * instead of reading as a `surfaceContainerHigh` smudge. Do not hardcode white (dark theme).
+ * Fill is theme [androidx.compose.material3.ColorScheme.surface] and the edge is
+ * [androidx.compose.material3.ColorScheme.outline], drawn per [HoverTipDepth] by
+ * [TooltipCardSurface]: a beveled edge and a soft shadow under [TipDepth.Raised] (the default), a
+ * 1 dp border and a hard shadow under [TipDepth.Flat]. A lightness step plus an edge, not hue, so
+ * the card lifts off the panel instead of reading as a `surfaceContainerHigh` smudge. Do not
+ * hardcode white (dark theme).
  *
  * Width capped at [maxWidth] and height at [maxHeight] — content past that height scrolls inside a
  * [FadingScrollColumn] tinted to the card, with a floating scrollbar thumb so the overflow is
@@ -357,7 +362,7 @@ val TooltipMaxHeight: Dp = 320.dp
  *
  * By default wraps in [DisableSelection] (safe inside parent [androidx.compose.foundation.text.selection.SelectionContainer]
  * and for non-interactive name tooltips). Set [selectable] true for copyable/select-paste cards
- * ([CopyableTooltipBody] on slider markers).
+ * (a [CopyableTooltipBody], say).
  *
  * Supply your own inner padding in [content]; the card adds none.
  */
@@ -371,7 +376,8 @@ fun TooltipCard(
     containerColor: Color = MaterialTheme.colorScheme.surface,
     /**
      * Canvas chart-tip chrome: frosted white so what sits under the card still reads. Uses
-     * [ChartTipFill] / [ChartTipBorder] / 5 dp corners — the same object as [drawChartTooltipCard].
+     * [ChartTipFill] / [ChartTipBorder] / 5 dp corners, the same paper a host draws its canvas
+     * cards with.
      * Wins over [containerColor].
      */
     frosted: Boolean = false,
@@ -379,9 +385,9 @@ fun TooltipCard(
     frostedAlpha: Float? = null,
     /**
      * Tint the frosted wash instead of using its white base, keeping the chart-tip shape, border and
-     * alpha. For a card that belongs to something colored — Bird's Eye's beam tints its asset tip
-     * toward the asset hue and its liability tip toward the liability hue, so a card that has parked
-     * itself away from the bar it describes still says which side it came from. Keep it *very* faint:
+     * alpha. For a card that belongs to something colored: a chart with two series can tint each
+     * series' card toward that series' hue, so a card that has parked itself away from the bar it
+     * describes still says which series it came from. Keep it *very* faint:
      * this is an identity cue under dense content, not a surface color.
      */
     frostedTint: Color? = null,
@@ -467,7 +473,11 @@ fun TooltipCard(
     }
 }
 
-/** Surface tokens for Family B/C hover cards and the matching always-visible [UsStateHoverCard]. */
+/**
+ * Surface tokens for Family B and C hover cards (see [TipPlacement]), and for any always-visible
+ * panel a host wants to match them. Under [TipDepth.Flat] the edge is a 1 dp [borderColor] border;
+ * otherwise it is drawn beveled over the content and no border is set.
+ */
 @Composable
 fun TooltipCardSurface(
     modifier: Modifier = Modifier,

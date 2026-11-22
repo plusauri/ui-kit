@@ -51,7 +51,7 @@ class PanelSeamDividerTest {
                     }
                 }
             }
-            // Grab the rule above the pill, so the drag starts on the seam and not on the click target.
+            // Grab the divider's rule above the pill, so the drag starts on the line and not on the click target.
             onNodeWithContentDescription("Hide list").performMouseInput {
                 moveTo(center.copy(y = 2f))
                 press()

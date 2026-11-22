@@ -177,7 +177,7 @@ private fun HoverTarget(label: String) {
 
 @Composable
 fun OverflowTextPage() = PageColumn {
-    val long = "Required minimum distributions begin in the year the owner turns seventy-three"
+    val long = "A long label that runs past the width of its column and is cut off with an ellipsis"
     ExampleCard("Cut short: hover for the whole text") {
         Box(Modifier.width(220.dp)) {
             OverflowTooltipText(long, style = MaterialTheme.typography.bodyMedium)
@@ -188,7 +188,7 @@ fun OverflowTextPage() = PageColumn {
     }
     ExampleCard("Two lines before it cuts") {
         Column(Modifier.width(220.dp)) {
-            OverflowTooltipText("$long, unless the plan says otherwise.", maxLines = 2, modifier = Modifier.fillMaxWidth())
+            OverflowTooltipText("$long, and it wraps to a second line first.", maxLines = 2, modifier = Modifier.fillMaxWidth())
         }
     }
 }

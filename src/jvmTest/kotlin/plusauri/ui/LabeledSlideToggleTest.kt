@@ -21,12 +21,12 @@ class LabeledSlideToggleTest {
     @Test
     fun `a click on the label toggles, and the row says on or off`() = runComposeUiTest {
         var on by mutableStateOf(false)
-        setContent { MaterialTheme { LabeledSlideToggle("Offline only", on, { on = it }, hint = "Local models only") } }
+        setContent { MaterialTheme { LabeledSlideToggle("Auto-save", on, { on = it }, hint = "Save after every change") } }
 
-        onNodeWithText("Offline only").assertIsOff().performClick()
+        onNodeWithText("Auto-save").assertIsOff().performClick()
         assertEquals(true, on)
-        onNodeWithText("Offline only").assertIsOn()
-        onNodeWithText("Local models only").performClick()
+        onNodeWithText("Auto-save").assertIsOn()
+        onNodeWithText("Save after every change").performClick()
         assertEquals(false, on)
     }
 

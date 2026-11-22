@@ -23,14 +23,17 @@ import androidx.compose.ui.Modifier
  *                       When null, floating-point noise is cleaned automatically (default).
  * @param maxTotalDigits When set, caps the total digit count (integer + decimal digits) the
  *                       user can enter, applied to the displayed percentage value. See
- *                       [NumericInput.maxTotalDigits] for full semantics.
+ *                       [NumericInput]'s `maxTotalDigits` for full semantics.
  * @param clampToRange        When true and [range] is set, out-of-range typed values are
  *                            silently clamped instead of shown with an error highlight.
  * @param allowScaleShortcuts When false, the k/K/m/M/b/B scale shortcuts are disabled.
- * @param blankWhenZero  When true, an external 0% renders empty (see [NumericInput.blankWhenZero]).
+ * @param blankWhenZero  When true, an external 0% renders empty (see [NumericInput]'s `blankWhenZero`).
  *                       Use when the parent coerces in-progress `null` back to `0` so backspace
  *                       does not trap a sticky zero.
  * @param enabled        When false the field is non-interactive.
+ * @param isError        When true, the field shows its error highlight.
+ * @param missingFieldLabel  The name this field answers to for [MissingFieldPointer] and
+ *                       [InvalidFields]; see [NumericInput]. Defaults to [label].
  * @param modifier       Applied to the underlying text field.
  */
 @Composable

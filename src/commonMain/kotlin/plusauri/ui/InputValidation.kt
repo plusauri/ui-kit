@@ -1,6 +1,6 @@
 package plusauri.ui
 
-// Shared numeric-prefix validation used by NumericInput and SliderWithNumericInput.
+// Numeric-prefix validation and paste cleanup for NumericInput.
 
 private val positiveDecimalPrefixRe = Regex("""^\d*\.?\d*$""")
 private val signedDecimalPrefixRe   = Regex("""^-?\d*\.?\d*$""")

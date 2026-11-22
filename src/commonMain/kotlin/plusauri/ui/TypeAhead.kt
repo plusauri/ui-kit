@@ -17,12 +17,12 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 /**
- * Type-to-select for a fixed option list — the reflex every native select honors and ours did not:
- * with a picker focused, typing "m" lands on the first option starting with M, "m" again cycles to
- * the next one, "ma" narrows to March/May, and the buffer forgets itself after a second of silence.
+ * Type-to-select for a fixed option list, the reflex every native select honors: with a picker
+ * focused, typing "m" lands on the first option starting with M, "m" again cycles to the next one,
+ * "ma" narrows to March/May, and the buffer forgets itself after a second of silence.
  *
- * Shared by [MultiColumnSelect] and [EnumSelect] so every picker in the app behaves the same way;
- * neither primitive owns a copy. The matcher is pure state plus a clock: it knows nothing about
+ * [EnumSelect] uses it, and a host's own pickers can use it too, so every picker behaves the same
+ * way and none owns a copy. The matcher is pure state plus a clock: it knows nothing about
  * focus or menus. Callers feed it a character and the option texts and move the highlight to the
  * index it returns.
  *
@@ -33,9 +33,9 @@ import kotlin.time.TimeSource
  * - Any other continuation (`ma`) narrows the prefix and searches from the current option
  *   *inclusive*, so having landed on March, "a" stays there.
  * - A continuation that matches nothing starts a fresh search from that letter alone, so a new
- *   letter is never swallowed (`s s y` on the Forecast Detail chips lands on Yr).
- * - Matching is case-insensitive and ignores leading glyphs — a tax marker, a flag, a ● — so "m"
- *   finds "🇩🇪 Money market", not the flag. See [typeAheadText].
+ *   letter is never swallowed (`s s y` over short labels lands on the second S, then on Y).
+ * - Matching is case-insensitive and ignores leading glyphs — a marker, a flag, a ● — so "m"
+ *   finds "🇩🇪 Munich", not the flag. See [typeAheadText].
  *
  * @param timeout silence after which the buffer resets; the native convention is about a second.
  */
@@ -116,7 +116,7 @@ fun typeAheadText(label: String): String =
 /**
  * The one-letter jump over a list of items: the next of [labels] (each already [typeAheadText])
  * after [from] that starts with [c], wrapping, or before it when [backward]. [from] -1 starts at the
- * top. Null when none does. The library's List rows and its Cards both walk by it.
+ * top. Null when none does. Useful for a list or a grid of cards that jumps by first letter.
  */
 fun nextLabelStarting(labels: List<String>, from: Int, c: Char, backward: Boolean = false): Int? {
     if (labels.isEmpty()) return null
@@ -127,8 +127,8 @@ fun nextLabelStarting(labels: List<String>, from: Int, c: Char, backward: Boolea
 
 /**
  * The strings a [SelectOption] can be found by. A [SelectOption.KeyLabel] answers to either half —
- * a state picker's "CA" and "California", a growth picker's "● US Equity" where the label is the
- * distribution stats — so a prefix on either one lands.
+ * a state picker's "CA" and "California", or a key that is a name while the label is a detail
+ * line — so a prefix on either one lands.
  */
 internal fun SelectOption.typeAheadTexts(): List<String> = when (this) {
     is SelectOption.Label -> listOf(typeAheadText(label))
@@ -154,15 +154,16 @@ internal fun typedCharOf(codePoint: Int): Char? {
     if (ch.isWhitespace() || ch.isISOControl() || ch.isSurrogate()) return null
     // macOS gives the arrow, Home/End and function keys characters of their own in the private-use
     // area (NSUpArrowFunctionKey is U+F700 …). They are keys, not typing: read as a character, ←
-    // on a real Mac keyboard was taken as a letter and swallowed (owner, 2026-09-27). A synthetic
-    // test key carries no character at all, which is why no UI test saw it.
+    // on a real Mac keyboard would be taken as a letter and swallowed. A synthetic test key carries
+    // no character at all, so a UI test cannot catch this; MacArrowKeysAreNotTypingTest checks it
+    // directly.
     if (ch in '\uE000'..'\uF8FF') return null
     return ch
 }
 
 /**
- * A letter or digit typed with no Ctrl/Alt/Cmd — the only keys a chip row or the dossier walk
- * searches by. Punctuation (`?`) and everything else goes on to whoever else wants it.
+ * A letter or digit typed with no Ctrl/Alt/Cmd — the only keys a chip row or a keyboard walk of a
+ * form searches by. Punctuation (`?`) and everything else goes on to whoever else wants it.
  */
 fun KeyEvent.typeAheadLetter(): Char? = typeAheadChar()?.takeIf { it.isLetterOrDigit() }
 
@@ -177,21 +178,22 @@ fun KeyEvent.isBang(): Boolean {
     if (isCtrlPressed || isAltPressed || isMetaPressed) return false
     val ch = typedCharOf(utf16CodePoint)
     if (ch == ListKeys.TOGGLE_ALL) return true
-    // Shift-1, the key `!` is on a US layout — re-keying [ListKeys.TOGGLE_ALL] means changing this too. A US layout types '!'; a synthetic test key may type '1' or nothing.
+    // Shift-1, the key `!` is on a US layout; re-keying [ListKeys.TOGGLE_ALL] means changing this
+    // too. A US layout types '!'; a synthetic test key may type '1' or nothing.
     return isShiftPressed && (key == Key.One || key == Key.NumPad1) && (ch == null || ch == '1')
 }
 
 /**
  * Type-to-focus over a row of toggle buttons ([MultiButtonSelect]): with a button focused, a letter
- * moves focus to the **next** button whose label starts with it, wrapping — so on the Forecast
- * Detail chips `b` is the Balance Sheet chart, `b b` its table, `b b b` Brackets — and Enter toggles
- * it, as it toggles any focused button. A letter moves focus rather than toggling because a row may
- * be single- or multi-select, and "go there" means the same in both.
+ * moves focus to the **next** button whose label starts with it, wrapping — so on a row of Bold,
+ * Border and Bullets, `b` is Bold, `b b` Border, `b b b` Bullets — and Enter toggles it, as it
+ * toggles any focused button. A letter moves focus rather than toggling because a row may be
+ * single- or multi-select, and "go there" means the same in both.
  *
  * **One letter, one rule, no timer.** Unlike a long picker ([TypeAheadMatcher], where "ma" narrowing
  * to March is worth a one-second buffer), a chip row is short and its labels are short, so a letter
- * never depends on how fast the one before it was typed. The dossier walk ([KeyboardDrill]) follows
- * the same rule.
+ * never depends on how fast the one before it was typed. [nextLabelStarting] follows the same
+ * rule.
  *
  * One group can span several toolbars that read as one row: each registers its buttons under a
  * [slot], and matching runs over the slots in order. A toolbar with no group gets its own.

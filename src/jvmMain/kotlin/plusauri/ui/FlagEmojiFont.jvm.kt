@@ -7,7 +7,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 
 /** Identity of the bundled flags face. Not a system family name. */
-const val FLAG_EMOJI_FONT_IDENTITY = "TutilisFlags"
+const val FLAG_EMOJI_FONT_IDENTITY = "PlusauriFlags"
 
 /**
  * True on Windows, where Segoe UI Emoji draws a regional-indicator pair as two letters.
@@ -27,7 +27,8 @@ fun flagEmojiFontBytes(): ByteArray {
 private object FlagEmojiClasspath
 
 /**
- * Load the five planning-region flags and expose them as [LocalFlagEmojiFont].
+ * On Windows, load the bundled flags subset (🇺🇸 US, 🇬🇧 GB, 🇩🇪 DE, 🇫🇷 FR and 🇪🇸 ES only) and
+ * expose it as [LocalFlagEmojiFont].
  *
  * A last-resort fallback cannot win: Segoe UI Emoji already has the two code points,
  * and it has no flag ligature. A [FontFamily] of several faces does not help either —

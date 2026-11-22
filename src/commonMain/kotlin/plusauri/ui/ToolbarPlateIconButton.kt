@@ -10,34 +10,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 
-/**
- * Hit cell for [FeatureToolbar] plate buttons (copy · close-up · mail · help · …).
- * ~10% under the historical 28.dp Material IconButton so the cluster sits closer to the
- * zoom/Reveal plate ([SliderPlateIconSize]) rather than reading as a second, larger family.
+/*
+ * A "plate" here is a square, rounded badge with a visible rim that an icon is drawn on, as in the
+ * small action clusters (copy · zoom · filter · mail · help) in a chart or table header.
  */
-/** Touch cell for FeatureToolbar plate buttons — a few dp larger than [ToolbarPlateIconSize] so rims aren’t tight against the host. */
+
+/**
+ * Hit cell for a header toolbar's plate buttons (copy · zoom · mail · help · …). A few dp larger
+ * than [ToolbarPlateIconSize] so the plates' rims are not tight against the button's edge.
+ */
 val ToolbarIconButtonSize = 28.dp
 
 /**
- * Toolbar glyph size for chrome-plate icons in chart / table headers (close-up · filter ·
- * merge · mail · copy · compact help). Shared optical weight for the FeatureToolbar cluster.
- * 23.dp = prior 20.dp × 1.15 so pictograms read at header density (owner review 2026-08-07).
- * Still a hair above [SliderPlateIconSize] (plates need the rim; slider plates sit beside a track).
+ * Glyph size for plate icons in chart and table header toolbars (zoom · filter · merge · mail ·
+ * copy · compact help), so the cluster shares one optical weight. Large enough for the pictograms
+ * to read at header density while leaving room for the plate's rim inside [ToolbarIconButtonSize].
  */
 val ToolbarPlateIconSize = 23.dp
 
 /**
- * Host clip/ripple for FeatureToolbar **plate** buttons.
+ * Clip and ripple shape for header toolbar **plate** buttons.
  *
- * Material [IconButton] defaults to a **circle**, which shears the square gold badge’s corners and
+ * Material [IconButton] defaults to a **circle**, which shears a square badge’s corners and
  * makes the rim look thin/beveled. Match the badge’s rounded-rect (~22% of plate) so the full rim
  * stays visible. Use via [ToolbarPlateIconButton] (or pass as `shape=` on [IconButton]).
  */
 val ToolbarPlateButtonShape: Shape = RoundedCornerShape(percent = 22)
 
 /**
- * [IconButton] sized for the FeatureToolbar cluster that does **not** circle-clip plate art.
- * Prefer this over bare [IconButton] whenever the child is a branded square plate.
+ * [IconButton] sized for a header toolbar's plate cluster that does **not** circle-clip plate art.
+ * Prefer this over bare [IconButton] whenever the child is a square plate. It shows no hover tip of
+ * its own, so wrap it in [HoverTooltip] to give the icon a visible name.
  */
 @Composable
 fun ToolbarPlateIconButton(

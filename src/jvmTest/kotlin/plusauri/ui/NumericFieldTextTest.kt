@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test
 /**
  * Empty-vs-zero display and blur reconciliation for [NumericInput].
  *
- * Seed zeros and callers that coerce in-progress `null` back to `0` were making money and
- * ±yr fields painful: the field snapped to "0" whenever the user cleared or left a lone `-`.
+ * Seed zeros, and callers that coerce an in-progress `null` back to `0`, must not make the field
+ * snap to "0" whenever the user clears it or leaves a lone `-`.
  * The focused round trip itself is covered by [NumericInputNonNullBackingTest].
  */
 class NumericFieldTextTest {

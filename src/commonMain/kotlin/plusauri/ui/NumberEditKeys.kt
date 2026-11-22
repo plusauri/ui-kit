@@ -5,9 +5,8 @@ package plusauri.ui
  * thousand, a million or a billion (the capital divides), and `-` flips its sign wherever the caret
  * is.
  *
- * The kit owns these letters so a field works without the product's shortcut table. The product
- * documents the same keys there (`tutil.shortcuts.ControlKey`), and a test in `:tutil-ui` holds the
- * two to the same letters.
+ * The kit owns these letters so a field works without a host shortcut table. A host that lists its
+ * shortcuts should read the keys from here, or test that its list agrees.
  */
 object NumberEditKeys {
     const val THOUSANDS: Char = 'k'

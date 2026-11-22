@@ -42,20 +42,19 @@ import plusauri.ui.typeAheadText
  * Displays the currently selected option in an outlined field and shows a compact
  * [CompactDropdownMenu] of [options] on click. The open menu takes the keyboard: Up/Down move
  * between rows, Enter commits, Escape closes, and typing a letter is type-to-select
- * ([TypeAheadMatcher]) — the same behavior as [MultiColumnSelect], through the same matcher. On the
- * focused, closed field a typed letter opens the menu already on the match.
+ * ([TypeAheadMatcher]), so every menu built on that matcher answers to letters the same way. On
+ * the focused, closed field a typed letter opens the menu already on the match.
  *
  * @param options       Full list of selectable values.
  * @param value         Currently selected value.
  * @param onValueChange Called when the user selects a different option.
  * @param display       Converts an option to its display string; defaults to [toString].
  * @param displaySelected Display string for the **closed field** when it must be terser than a
- *                      menu row; defaults to [display]. The forecast-endpoint dropdowns use it —
- *                      a menu row has room to say when an endpoint lands ("Alex's Retirement
- *                      65·2035"), while the field is 150dp and would truncate that annotation
- *                      away along with half the name.
+ *                      menu row; defaults to [display]. A menu row has room for an annotation
+ *                      ("Final review · due Mar 3"), while a narrow closed field would truncate
+ *                      that annotation away along with half the name.
  * @param label         Optional floating label shown on the border (same convention as
- *                      [TightTextField] and [NumericInput]).
+ *                      [NumericInput]). Prefer null inside a [LabeledField].
  * @param enabled       When false the dropdown is non-interactive.
  * @param optionTag     A [fieldTag] tag for an option's menu row, for UI tests that pick by
  *                      identity rather than by caption — see [fieldOption]. Null leaves the row
@@ -81,9 +80,10 @@ fun <T> EnumSelect(
     val texts = remember(options, display) { options.map { typeAheadText(display(it)) } }
     val focusRequesters = remember(options.size) { List(options.size) { FocusRequester() } }
     val typeAhead = remember { TypeAheadMatcher() }
-    // See [MultiColumnSelect]: the option a keystroke on the closed field found, focused on open.
+    // The option a keystroke on the closed field found, focused once the menu opens.
     var pendingFocus by remember { mutableStateOf<Int?>(null) }
-    // The row keyboard focus is on, drawn with an explicit ring — see [MultiColumnSelect].
+    // The row keyboard focus is on, drawn with an explicit ring: a menu row's own focus
+    // indication is too faint to follow while arrowing through the list.
     var focusedIndex by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(expanded) {
@@ -91,7 +91,7 @@ fun <T> EnumSelect(
     }
 
     // Outlined field is a button-like target; override Material's 48 dp floor so the field
-    // height matches TightTextField and NumericInput at the same padding.
+    // height matches NumericInput and other compact text fields at the same padding.
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         Box(
             modifier = modifier.onPreviewKeyEvent { event ->
@@ -148,7 +148,8 @@ fun <T> EnumSelect(
                 offset = CompactMenuBelowOffset,
                 placement = CompactMenuPlacement.BelowAnchor,
             ) {
-                // From inside the popup, once its rows exist — see [MultiColumnSelect].
+                // From inside the popup, once its rows exist: requesting focus before the popup
+                // composes finds no row to focus.
                 LaunchedEffect(Unit) {
                     if (options.isNotEmpty()) focusRequesters[pendingFocus ?: selectedIndex ?: 0].requestFocus()
                     pendingFocus = null

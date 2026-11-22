@@ -12,27 +12,31 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 
 /**
- * Which unanswered fields the form should point at right now.
+ * Which unanswered fields a form should point at right now.
  *
- * Empty until the user reaches for a disabled OK. Then [revealed] is the **full** missing list —
- * not the truncated `Needs: …` hint — so `+2 more` still has somewhere to land, and [first] is
- * the one to focus.
+ * The host owns the form, its list of required fields and its disabled OK button; it builds this
+ * value and provides it through [LocalMissingFieldPointer]. The kit's controls read it.
  *
- * Field identity is the label [requiredFields] already uses: the same string the control draws.
- * A parallel key would be a second name for that string. Controls opt in with
+ * Empty until the user reaches for a disabled OK. Then [revealed] is the **full** missing list,
+ * not a truncated hint beside OK, so a "+2 more" in that hint still has somewhere to land, and
+ * [target] is the one to focus.
+ *
+ * Field identity is the label the host's required-field list already uses: the same string the
+ * control draws. A parallel key would be a second name for that string. Controls opt in with
  * `missingFieldLabel` (on the input primitives) or [Modifier.pointAtMissingField].
  *
- * [generation] increments each time the user *clicks* the dead OK or one of the `Needs:` pills.
- * Hover lights the fields without moving focus — stealing the caret on a mouse-over is worse
- * than leaving the field off-screen. A click is sticky and **focuses** [target], which also
- * scrolls it into view: the dead OK targets the first missing field, and each pill targets its
- * own, so the pills read as a row of "next" buttons rather than one label about the first.
+ * The host increments [generation] each time the user *clicks* the dead OK, or a per-field pill if
+ * the host shows one. Hover lights the fields without moving focus: stealing the caret on a
+ * mouse-over is worse than leaving the field off-screen. A click is sticky and **focuses**
+ * [target], which also scrolls it into view. The dead OK should target the first missing field,
+ * and each pill its own, so the pills read as a row of "next" buttons rather than one label about
+ * the first.
  */
 data class MissingFieldPointer(
     val revealed: Set<String> = emptySet(),
     val target: String? = null,
     val generation: Int = 0,
-    /** Where the pane learns which pointable field holds focus, for [AppShortcut.NextMissing]. */
+    /** Where the host learns which pointable field holds focus, for a "next missing field" key. */
     val focus: MissingFieldFocus? = null,
 ) {
     companion object {
@@ -42,13 +46,17 @@ data class MissingFieldPointer(
 
 /**
  * The label of the pointable field that holds focus right now, or null. Written by
- * [pointAtMissingField] as focus moves; read by the edit pane when Ctrl-J asks for the next
- * missing field, which is the first one that is not this. Plain, not state: nothing draws from it.
+ * [pointAtMissingField] as focus moves. A host that offers a "next missing field" shortcut reads
+ * it to pick the first missing field that is not this one. Plain, not state: nothing draws from it.
  */
 class MissingFieldFocus {
     var label: String? = null
 }
 
+/**
+ * The open form's [MissingFieldPointer], provided by the host; [MissingFieldPointer.None] outside
+ * one.
+ */
 val LocalMissingFieldPointer = compositionLocalOf { MissingFieldPointer.None }
 
 /** True when [label] is one of the fields OK has been asked to point at. */
@@ -60,8 +68,9 @@ fun isMissingFieldPointed(label: String?): Boolean {
 
 /**
  * Focuses this control when it is the pointer's [MissingFieldPointer.target] and the user has
- * clicked the disabled OK or this field's pill. Focus is what actually answers "where?": the caret lands in the field, and
- * the focused node bringing itself into view is a side effect, not the point.
+ * clicked the disabled OK or this field's pill. Focus is what actually answers "where?": the caret
+ * lands in the field, and the focused node bringing itself into view is a side effect, not the
+ * point.
  *
  * Hover-to-preview does not focus. [focusHost] is for wrappers that are not themselves a
  * text field or other focus target (an outlined group, a chip-row Box) and need a target
@@ -76,8 +85,8 @@ fun Modifier.pointAtMissingField(label: String?, focusHost: Boolean = false): Mo
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(pointer.generation) {
         // Only on an explicit click (generation bump). Keying this on [target] as well would
-        // steal the caret the moment the current field became non-empty — typing "H" of
-        // "House" would jump to the next missing control.
+        // steal the caret the moment the current field became non-empty: typing the first letter
+        // of a name would jump to the next missing control.
         if (!label.isNullOrEmpty() && pointer.generation > 0 && pointer.target == label) {
             // Next frame: a same-frame requestFocus loses to the click that triggered us.
             withFrameNanos { }

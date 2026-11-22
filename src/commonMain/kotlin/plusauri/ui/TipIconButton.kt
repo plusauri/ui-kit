@@ -12,10 +12,11 @@ import androidx.compose.ui.unit.dp
 /**
  * **The** small icon button: an [IconButton] that always says what it does on hover.
  *
- * A button that shows only an icon has a name for a screen reader and, until this existed, often
- * nothing for a sighted reader — "what are all these buttons?" (design-partner first impression,
- * 2026-10). Every icon button in the product goes through here, so the hover tip cannot be left
- * off; `TipIconButtonScanTest` fails on a bare `IconButton(` anywhere else.
+ * A button that shows only an icon has a name for a screen reader but, without a tip, nothing for
+ * a sighted reader, and a row of unexplained icons is one of the first things new users ask about.
+ * Because [tip] is required, an icon button built here cannot reach the screen without one. An app
+ * that wants every icon button to carry a tip can route them all through this function and add a
+ * test of its own that fails on a bare `IconButton(` elsewhere in its sources.
  *
  * Pass the same string the icon carries as its `contentDescription` unless the hover has more to
  * say: one name, read aloud and shown on hover.

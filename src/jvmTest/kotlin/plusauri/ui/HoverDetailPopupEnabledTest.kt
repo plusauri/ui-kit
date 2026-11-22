@@ -22,13 +22,13 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * [HoverDetailPopup]'s `enabled` is how an anchor with its own hit-test (the risk/return scatter)
+ * [HoverDetailPopup]'s `enabled` is how an anchor with its own hit-test (a scatter plot's marks)
  * says "the pointer left the mark". It must behave like leaving the anchor: an **unlatched** card
  * closes at once, but a **latched** one — the reader dwelt, the card tinted — stays for the flight
  * grace so the pointer can travel off the mark to it.
  *
- * The regression: `enabled = false` closed the card unconditionally, so the scatter's card tinted
- * on a dwell and then vanished on the first move toward it.
+ * The failure this guards against: if `enabled = false` closed the card unconditionally, a
+ * scatter's card would tint on a dwell and then vanish on the first move toward it.
  */
 @OptIn(ExperimentalTestApi::class)
 class HoverDetailPopupEnabledTest {

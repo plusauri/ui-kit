@@ -29,18 +29,21 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * The places a where-jump can land, keyed by the same string that names them everywhere else: a
- * write control's [fieldTag] tag, which is what `AppLocation.fieldTag`
- * carries. Every [fieldTag] registers here while it is on screen, so a control is a jump
- * target the day it is tagged, with nothing per call site and no list to keep in step.
+ * The places a jump can land, so a "show me where this is set" link can take the reader straight
+ * to a control. Each place is keyed by the same string that names it everywhere else: a control's
+ * [fieldTag] path. Every [fieldTag] registers here while it is on screen, so a control is a jump
+ * target the moment it is tagged, with nothing per call site and no list to keep in step.
  *
- * A jump walks its path first (`walkWhereJump`, in the product) and then asks for the location's tag. The walk
- * opens the section and the tab in the same frame it asks, so [land] waits a few frames for the
- * control to compose; a control the walk could not bring on screen (one inside an item the reader
- * has to choose) is simply never registered, and the jump says what is left instead.
+ * A jump is two steps, and the first is the host's. The host first navigates to the place (opens
+ * the right screen, tab and section), then calls [land] with the control's tag. Navigation and
+ * the call can happen in the same frame, so [land] waits a few frames for the control to compose.
+ * A control the host could not bring on screen (one inside an item the reader has to choose
+ * first) is simply never registered; [land] returns null, and the host can say what is left to do.
  *
- * Provided by the product's `Simulator`, or by a host that wants to watch landings (a test): the same
- * controls drawn outside a plan — the New Dossier dialog, a lesson figure — register with nothing.
+ * The host provides an instance through [LocalJumpTargets] around the screens a jump can reach,
+ * and sets [flashColor] from its theme. A test can provide one to watch landings. The same
+ * controls drawn with no provider (in a dialog or a preview that is not a jump destination)
+ * register with nothing.
  */
 class JumpTargets {
     private val shown = LinkedHashMap<String, MutableList<JumpTargetNode>>()
@@ -75,7 +78,7 @@ class JumpTargets {
      */
     // A key shown twice is a card and its close-up, or a control and the same one in a dialog over
     // it: the newest is the one in front. Nodes registered as one [group] (the rows of one table
-    // that share a key: every Social Security flow in the cash-flow table) land together, so all of
+    // that share a key, such as every row of one category in a ledger) land together, so all of
     // the newest node's group flash, the first taking focus.
     private fun nodesFor(key: String): List<JumpTargetNode> =
         shown[key]?.let { nodes ->
@@ -91,10 +94,10 @@ class JumpTargets {
     /**
      * Land on [keys]' first entry once it is on screen, waiting up to [frames] frames for it to
      * compose: bring it into view, take focus (its first focusable child, when it is a wrapper — the
-     * same rule as `takesFocusHandoff`), and flash an outline once so the eye finds it.
+     * same rule as [takesFocusHandoff]), and flash an outline once so the eye finds it.
      *
-     * The rest of [keys] are fallbacks, nearest first — the Add pill an account-type option sits
-     * behind, the section a field's item lives in. One is taken only once the budget has run out
+     * The rest of [keys] are fallbacks, nearest first: the Add button an option sits behind, or the
+     * section a field's item lives in. One is taken only once the budget has run out
      * without the first: a section the jump opened this frame composes its control a frame or two
      * later, and landing on its header in the meantime would be landing short. Returns the key it
      * landed on, or null when none showed.
@@ -124,16 +127,18 @@ class JumpTargets {
 private val CompoundParts = listOf(FieldTagPart.Value, FieldTagPart.Currency, FieldTagPart.Year)
 
 /**
- * The place a subtree is part of, by its Where step id (`"taxes.federal-statement"`): a table row
- * keyed inside it registers as `"$scope>$key"` ([jumpScoped]), so the same line on two statements
- * (the standard deduction, federal and state) is two places. [landingKeys] asks in that form.
+ * The place a subtree is part of, by an id the host chooses (`"reports.quarterly"`), so the same
+ * line on two reports (a subtotal that appears on both) can be two places. The kit only carries
+ * the value: the host provides it around the subtree, registers a row inside it under
+ * `jumpTarget(jumpScoped(LocalJumpScope.current, key))`, and builds the keys it passes to
+ * [JumpTargets.land] the same way.
  */
 val LocalJumpScope = staticCompositionLocalOf<String?> { null }
 
 /** [key] qualified by [scope]: the form a scoped row registers under. */
 fun jumpScoped(scope: String?, key: String): String = if (scope == null) key else "$scope>$key"
 
-/** The plan's [JumpTargets], or null outside one. */
+/** The [JumpTargets] the host provides, or null outside one. */
 val LocalJumpTargets = staticCompositionLocalOf<JumpTargets?> { null }
 
 /**

@@ -87,7 +87,7 @@ class MultiButtonSelectKeyboardTest {
                 val group = androidx.compose.runtime.remember { ButtonTypeAhead() }
                 androidx.compose.foundation.layout.Row {
                     MultiButtonSelect(
-                        buttonSelections = listOf("📈BS", "▦BS").map { ButtonData(ButtonImage.Unicode(it)) to ToggleState.Deselected },
+                        buttonSelections = listOf("📈Budget", "▦Budget").map { ButtonData(ButtonImage.Unicode(it)) to ToggleState.Deselected },
                         selectedMask = left.toList(),
                         onToggle = { left[it] = !left[it] },
                         toolbarOnly = true,
@@ -108,18 +108,18 @@ class MultiButtonSelectKeyboardTest {
         }
         runOnIdle { handoff.request() }
         waitForIdle()
-        // Focus is on the first BS; b goes to the next b — the table — and b again to Bra.
-        button("📈BS").performKeyInput { pressKey(Key.B) }
+        // Focus is on the chart's Budget; b goes to the table's Budget, and b again to Bra.
+        button("📈Budget").performKeyInput { pressKey(Key.B) }
         waitForIdle()
-        button("▦BS").assertIsFocused()
-        button("▦BS").performKeyInput { pressKey(Key.B) }
+        button("▦Budget").assertIsFocused()
+        button("▦Budget").performKeyInput { pressKey(Key.B) }
         waitForIdle()
         button("Bra").assertIsFocused()
-        // Shift (a capital) searches backwards: from Bra back to the table.
+        // Shift (a capital) searches backwards: from Bra back to the table's Budget.
         button("Bra").performKeyInput { withKeyDown(Key.ShiftLeft) { pressKey(Key.B) } }
         waitForIdle()
-        button("▦BS").assertIsFocused()
-        button("▦BS").performKeyInput { pressKey(Key.B) }
+        button("▦Budget").assertIsFocused()
+        button("▦Budget").performKeyInput { pressKey(Key.B) }
         waitForIdle()
         button("Bra").performKeyInput { pressKey(Key.Enter) }
         waitForIdle()

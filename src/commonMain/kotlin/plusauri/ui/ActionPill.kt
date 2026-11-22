@@ -28,80 +28,53 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * A compact, clickable pill for a small inline action beside a control — **Clear**, **Remove**,
- * **Reset** — drawn in the same style as the status pills on the Forecast Detail headers
- * (`StatusPill`): a faint tint of [color] on a rounded **rectangle** (not a stadium), a solid
- * [color] swatch leading, and the label in the theme's `onSurface` so it stays legible over any tint.
- *
- * **Why a new control and not one of the existing ones.** Material's `TextButton` has no edge, so in
- * a tight row it wraps its own label letter by letter. `OutlinedButton` is control-height and reads
- * as a peer of the fields, which a one-word side action is not. [CompactHeaderActionChip] is the
- * stadium-shaped filled chip the header bands use — the right family for a band, but beside a field
- * the oval reads heavier than the field it serves. The status pill's look — tint, small radius,
- * swatch — was the one already judged attractive, so an action in that shape is one vocabulary
- * fewer, not one more.
- *
- * **It is the inline-action rule.** Every small side action beside a field or an item is one of
- * these, never an inline `TextButton`. Among the other button families: a dialog's answer is a
- * [DialogConfirmButton], a back-out or any other footer choice a [DialogDismissButton], and a
- * small action on the thing beside it an [ActionPill].
- *
- * **The color says what kind of action it is**, not where it sits — [ActionKind]. Three kinds, three
- * hues, resolved in one place ([ActionKind.color]) so a Remove is the same red on every editor and
- * the tint is never re-decided at a call site. This is a different axis from the item-type accent
- * bars (Rule 6), which color *regions*; a pill inside an amber real-asset region is not amber.
- */
-/**
  * What an [ActionPill] does to the thing beside it, which is what decides its color.
  *
  * - [Add] — creates something: a row, a link, a phase. **Blue**, the theme primary: additive,
- *   the same hue the comfort band and the brand use for "good".
+ *   an invitation.
  * - [Clear] — un-answers a question without destroying anything: a link unset, a picker back to
- *   "not set". **Neutral** (`onSurfaceVariant`): quiet on purpose. Amber was tried first and
- *   rejected on two counts — it is the app's *warning* tone, and Rule 5's carve-out built Clear
- *   precisely so un-answering is a comfortable, legitimate move; and amber is also the real-asset
- *   region color, so a Clear beside a real-asset picker read as "belongs to the asset" rather than
- *   "caution". Gray keeps the trio's logic (blue adds, red destroys, gray un-answers) without
+ *   "not set". **Neutral** (`onSurfaceVariant`): quiet on purpose. A warning hue such as amber
+ *   would say "caution", when un-answering a question is a comfortable, legitimate move; and amber
+ *   is a common region or category color, so a Clear beside such a picker would read as belonging
+ *   to it. Gray keeps the logic of the set (blue adds, red destroys, gray un-answers) without
  *   borrowing either meaning.
- * - [Remove] — deletes a thing that exists: a cost row, a contribution, an heir. **Red**, the
+ * - [Remove] — deletes a thing that exists: a cost row, a contribution, a list entry. **Red**, the
  *   theme error color: the same channel every destructive affordance uses.
  * - [Reset] — puts a value back to what it was or to its default: an override reverted, a set of
  *   shares normalized. **Neutral**, like [Clear] — nothing is lost that a reader did not ask to
  *   lose — but its own glyph, because "back to default" and "no answer" are different promises.
- * - [Toggle] — switches a thing on or off, and is drawn [selected] when on: the COLO × / Wage ×
- *   column switches on the states table. **Primary**, like [Add] — the same soft blue the rest of
- *   the pill family wears, not the graphite secondary it wore first, which read as a disabled gray.
- *   Its swatch is a **box**: ticked when on, empty when off, so the state is legible without
- *   comparing tints. (A check drawn in both states said nothing.)
- * - [Go] — takes the reader to where a thing is edited: the balance sheet's Loans rows, which are
- *   a view of a record authored elsewhere, carry *Edit on House* / *Edit in Cash Flows*. **Primary**
- *   like [Add] — an invitation, nothing lost — with an arrow glyph, because the pill is a door,
- *   not an action on what is under it.
- * - [Run] — starts work the reader asked for and would not want started for them: the Classifiers
- *   tab's sensitivity sweep, several forecasts that never run on an edit. **Primary**, like [Go] —
- *   an invitation, nothing lost — with a play glyph, because the pill starts something here rather
- *   than taking the reader anywhere. Added 2026-10-04: [Go] is documented as a door, and a sweep is
- *   not one.
- * - [Invert] — flips a reading the other way round: the tax-lens map's "levies" ↔ "free of".
- *   **Tertiary**, the one theme hue the other kinds do not use, because it is neither additive
- *   nor destructive nor a return to anything. The only kind that is normally drawn [selected].
- * - [Copy] — puts a short value on the clipboard and changes nothing: the reference on a Reach Out
- *   question, which the sender pastes into a forum search or an email. **Neutral**, like [Clear]:
- *   nothing happens to the thing itself. The glyph is `#`, read as "a reference number", because a
- *   copy symbol is not in every font the app draws with (wasm included) and `#` is. Added
- *   2026-10-19; the caller swaps the label to a short "Copied" for a beat.
- * - [Previous] / [Next] — step a view one place back or forward: the Forecaster's year, one year at
- *   a time. **Primary**, like [Go] — they move the reader through the forecast and change nothing —
- *   with `‹` / `›`, drawn glyph-only beside the Year scrubber. Two kinds rather than one, because the
- *   glyph is the kind's and the two directions need different marks. Added 2026-10-29,
- *   when the year-step buttons moved from bare icons into the pill family.
+ * - [Invert] — flips a reading the other way round, such as a map that shades either the regions
+ *   that have a property or the ones that lack it. **Tertiary**, the one theme hue the other kinds
+ *   do not use, because it is neither additive nor destructive nor a return to anything. Usually
+ *   drawn `selected` while the reading is flipped.
+ * - [Toggle] — switches a thing on or off, and is drawn `selected` when on: a switch
+ *   that shows or hides a table column. **Primary**, like [Add] — a soft blue, since a neutral gray
+ *   would read as disabled. Its swatch is a **box**: ticked when on, empty when off, so the state is
+ *   legible without comparing tints. (A check drawn in both states would say nothing.)
+ * - [Go] — takes the reader to where a thing is edited: a row that is a read-only view of a record
+ *   authored elsewhere carries an *Edit in …* pill. **Primary** like [Add] — an invitation, nothing
+ *   lost — with an arrow glyph, because the pill is a door, not an action on what is under it.
+ * - [Run] — starts work the reader asked for and would not want started for them: a slow
+ *   calculation that never runs on an edit. **Primary**, like [Go] — an invitation, nothing lost —
+ *   with a play glyph, because the pill starts something here rather than taking the reader
+ *   anywhere, which is why it is not a [Go].
+ * - [Copy] — puts a short value on the clipboard and changes nothing: a reference code the reader
+ *   pastes into a search or an email. **Neutral**, like [Clear]: nothing happens to the thing
+ *   itself. The glyph is `#`, read as "a reference number", because a copy symbol is not in every
+ *   font (the wasm target's included) and `#` is. The caller may swap the label to a short
+ *   "Copied" for a beat.
+ * - [Previous] / [Next] — step a view one place back or forward, such as a chart's selected year,
+ *   one at a time. **Primary**, like [Go] — they move the reader and change nothing — with `‹` /
+ *   `›`, usually drawn glyph-only beside the control that shows the current place. Two kinds rather
+ *   than one, because the glyph is the kind's and the two directions need different marks.
  *
  * Each kind also owns a **glyph** ([glyph]) knocked out of the swatch — `+`, `×`, `−`, `↺` — so the
  * marker is a key to the kind and not a decoration, and so a glyph-only pill (a `×` at the end of a
  * dense table row, where a word would not fit) still says which kind it is.
  *
- * A fourth kind is a design decision, not a convenience: add it here with its reason, never a
- * bare `Color` parameter at a call site.
+ * A new kind is a design decision, not a convenience: add it here with its reason, never a bare
+ * `Color` parameter at a call site. (The `hue` parameter on [ActionPill] is the one narrow
+ * exception it documents.)
  */
 enum class ActionKind(internal val glyph: String) {
     Add("+"),
@@ -132,20 +105,7 @@ enum class ActionKind(internal val glyph: String) {
     }
 }
 
-/**
- * @param label    The action's word, or **null** for a glyph-only pill — the swatch and its glyph
- *                 alone, for a dense row where a word would set the row's height or width. Pass
- *                 [contentDescription] then, so the action still has a name for accessibility.
- *                 (Tried on a table row's remove and judged too quiet; kept for the cases where a
- *                 word truly cannot fit.)
- * @param selected For a pill that is a **toggle** rather than a one-shot action: true draws the
- *                 tint at full strength so the on state is read at a glance. A one-shot action
- *                 leaves it false.
- * @param density  [ActionPillDensity.Standard] everywhere a pill stands on its own.
- *                 [ActionPillDensity.Thin] only where two are **stacked** beside a control that must
- *                 not grow — the All / Clear pair on a toggle row.
- */
-/** How much vertical room an [ActionPill] takes — see the `density` parameter. */
+/** How much vertical room an [ActionPill] takes — see its `density` parameter. */
 enum class ActionPillDensity { Standard, Thin }
 
 object ActionPillDefaults {
@@ -159,6 +119,41 @@ object ActionPillDefaults {
     val ThinStackGap: Dp = 2.dp
 }
 
+/**
+ * A compact, clickable pill for a small inline action beside a control — **Clear**, **Remove**,
+ * **Reset** — drawn in the style of a status pill: a faint tint of the kind's color on a rounded
+ * **rectangle** (not a stadium), a solid swatch of that color leading, and the label in the theme's
+ * `onSurface` so it stays legible over any tint.
+ *
+ * **Why a new control and not one of the existing ones.** Material's `TextButton` has no edge, so in
+ * a tight row it wraps its own label letter by letter. `OutlinedButton` is control-height and reads
+ * as a peer of the fields, which a one-word side action is not. A stadium-shaped filled chip suits a
+ * header band, but beside a field the oval reads heavier than the field it serves. The status-pill
+ * shape — tint, small radius, swatch — is light enough to sit beside a field and still reads as
+ * clickable.
+ *
+ * **It is the inline-action rule.** Every small side action beside a field or an item is one of
+ * these, never an inline `TextButton`. Among the other button families: a dialog's answer is a
+ * [DialogConfirmButton], a back-out or any other footer choice a [DialogDismissButton], and a
+ * small action on the thing beside it an [ActionPill].
+ *
+ * **The color says what kind of action it is**, not where it sits — [ActionKind]. Each kind's hue
+ * is resolved in one place so a Remove is the same red in every form and the tint is never
+ * re-decided at a call site. This is a different axis from any colors a host uses to mark regions
+ * or item types: a pill inside an amber-accented region is not amber.
+ *
+ * @param label    The action's word, or **null** for a glyph-only pill — the swatch and its glyph
+ *                 alone, for a dense row where a word would set the row's height or width. Pass
+ *                 [contentDescription] then, so the action still has a name for accessibility.
+ *                 Prefer a word where one fits: a glyph alone is easy to miss.
+ * @param kind     What the action does, which decides its color and glyph.
+ * @param selected For a pill that is a **toggle** rather than a one-shot action ([ActionKind.Toggle],
+ *                 [ActionKind.Invert]): true draws the tint at full strength so the on state is read
+ *                 at a glance. A one-shot action leaves it false.
+ * @param density  [ActionPillDensity.Standard] everywhere a pill stands on its own.
+ *                 [ActionPillDensity.Thin] only where two are **stacked** beside a control that must
+ *                 not grow — the All / Clear pair on a toggle row.
+ */
 @Composable
 fun ActionPill(
     label: String?,
@@ -218,8 +213,7 @@ fun ActionPill(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                // The swatch, with the kind's glyph knocked out of it in the surface color — the
-                // same two-shapes-and-contrast idea as [HelpChipMark], for the same reason: a
+                // The swatch, with the kind's glyph knocked out of it in the surface color: a
                 // filled square with one bold glyph survives being 10 dp; anything finer does not.
                 // A Toggle that is off shows the box empty — outlined in the kind color, no glyph —
                 // so on/off is read from the box, not from the tint.

@@ -9,15 +9,20 @@ import androidx.compose.ui.text.font.FontFamily
 /**
  * Flags font for Windows, or null everywhere else.
  *
- * Null means "leave the characters alone": macOS ligates them with Apple Color Emoji,
- * and the web subset ligates them because it is the only emoji face Skia has.
+ * Null means "leave the characters alone": macOS ligates them with Apple Color Emoji. On wasm
+ * the kit ships no emoji font at all, so a web host must load an emoji font with flag ligatures
+ * itself (registered as a fallback font family) for flags to draw there.
  */
 val LocalFlagEmojiFont = staticCompositionLocalOf<FontFamily?> { null }
 
 /**
- * On Windows, provide [LocalFlagEmojiFont] for [content]. Other targets already ligate
- * regional-indicator pairs, so this is a pass-through there. The font bytes live in
- * `jvmMain` resources and are not part of the wasm download.
+ * On Windows, provide [LocalFlagEmojiFont] for [content]; a pass-through everywhere else. The
+ * host wraps its content in this once, near the root.
+ *
+ * The bundled font is a subset of Noto Color Emoji that holds only five flags: 🇺🇸 US, 🇬🇧 GB,
+ * 🇩🇪 DE, 🇫🇷 FR and 🇪🇸 ES. Any other flag on Windows still draws as two letters. The font bytes
+ * live in `jvmMain` resources and are not part of the wasm download; on wasm this does nothing,
+ * and the host supplies its own emoji font.
  */
 @Composable
 expect fun ProvideFlagEmojiFont(content: @Composable () -> Unit)

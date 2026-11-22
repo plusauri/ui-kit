@@ -48,12 +48,15 @@ import kotlinx.coroutines.delay
 import androidx.compose.material3.MaterialTheme
 
 /**
- * Thickness of the Issues locator bar — toolbar Bird's Eye (off Dossier), library row / card.
- * Heavier than the hover-zone hairline so it reads as a warning, not a hover hint.
+ * Thickness of the issues locator underbar ([issuesLocatorUnderbar]). Heavier than a hover-zone
+ * hairline so it reads as a warning, not a hover hint.
  */
 val IssuesLocatorUnderbarThickness: Dp = 2.dp
 
-/** Draws a 2 dp [color] underbar along the bottom edge — locates a plan that has [tutil.forecast.validation.DossierIssue]s. */
+/**
+ * Draws a 2 dp [color] underbar along the bottom edge: marks an item (a list row, a card, a toolbar
+ * button) whose content has problems the reader should look at.
+ */
 fun Modifier.issuesLocatorUnderbar(color: Color): Modifier = drawBehind {
     val stroke = IssuesLocatorUnderbarThickness.toPx()
     drawRect(
@@ -63,37 +66,38 @@ fun Modifier.issuesLocatorUnderbar(color: Color): Modifier = drawBehind {
     )
 }
 
-/** Delay before a sustained hover over an anchor opens its detail popup (hover-intent). */
 /**
- * `0` (2026-09-20, was 300): a detail card placed beside its row covers nothing the hand is near, so
- * there is no sweep to protect and the card should simply be there when the eye arrives.
+ * Delay before a sustained hover over an anchor opens its detail popup (hover-intent). Zero: a
+ * card placed beside its row covers nothing the hand is near, so there is no sweep to protect and
+ * the card should simply be there when the eye arrives. A host whose cards open over dense anchors
+ * passes a dwell through [HoverDetailOptions.intentDelayMs].
  */
 private const val HOVER_INTENT_MS = 0L
 
 /**
- * Where a [HoverDetailPopup] card opens — see [TipPlacement]. The three this host uses:
+ * Below the anchor, at the pointer's x. Where a [HoverDetailPopup] card opens is one of the
+ * [TipPlacement]s; the three that suit this popup:
  *
- * [TipPlacement.UnderPointer] is the original: the card's corner lands a hair up-left of the
- * pointer so the card is hovered the instant it opens — right for a wide anchor whose card must not
+ * [TipPlacement.UnderPointer] (the default): the card's corner lands a hair up-left of the
+ * pointer so the card is hovered the instant it opens. Right for a wide anchor whose card must not
  * flash, and for a card the reader is meant to move *into* (copy button, selection). Its cost is
  * that the card covers the anchor under the pointer, so a click aimed at the row lands on the card
  * instead (`onClick` mirrors the action to make that survivable).
  *
- * [TipPlacement.BesideAnchor] below, at the pointer's x ([BelowAnchorAtPointer]) keeps the pointer
- * **on the anchor**: the card hangs a clear gap below the row (above it when there is no room). The
- * reader can read it and still click the row it was about to click — the collection editors' case,
- * where a list row is one target and a tip that steals the click meant "move to the far right of the
- * row where tips don't show", which nobody can be expected to discover. Dismissal is hover-driven on
+ * [TipPlacement.BesideAnchor] below, at the pointer's x (this value) keeps the pointer **on the
+ * anchor**: the card hangs a clear gap below the row (above it when there is no room). The reader
+ * can read it and still click the row it was about to click. That matters for a list whose rows
+ * are click targets: a card that steals the click leaves the reader hunting for a spot on the row
+ * where no card shows, which nobody can be expected to discover. Dismissal is hover-driven on
  * anchor *or* card, so crossing the gap into the card to copy from it still works.
  *
- * [TipPlacement.Parked]: the balance beam's pattern, for a pair of tables read side by side —
- * hovering an asset parks the card over the liabilities' corner and vice versa, so the card is
- * always away from the hand, paints in one place instead of chasing the row, and a reader learns
- * where to look once.
+ * [TipPlacement.Parked]: for a pair of tables read side by side. Hovering a row in the left table
+ * parks the card over a corner of the right table and vice versa, so the card is always away from
+ * the hand, paints in one place instead of chasing the row, and a reader learns where to look once.
  */
 val BelowAnchorAtPointer: TipPlacement = TipPlacement.BesideAnchor(TipSide.Below, TipAlignX.AtPointer)
 
-/** Off the anchor's trailing edge at the pointer's y — the statement tables' row cards. */
+/** Off the anchor's trailing edge at the pointer's y (table row cards). */
 val EndOfAnchor: TipPlacement = TipPlacement.BesideAnchor(TipSide.End)
 
 /** Room kept between a resized card and the window's right and bottom edges. */
@@ -106,15 +110,16 @@ private const val SurfaceTintStrength = 0.08f
 val StartOfAnchor: TipPlacement = TipPlacement.BesideAnchor(TipSide.Start)
 
 /**
- * A Compose card that behaves like a chart's canvas card: rides beside the pointer
+ * A Compose card that behaves like a card drawn on a chart canvas: rides beside the pointer
  * ([TipPlacement.FollowsPointer]), no dwell, re-targets the instant the pointer crosses to the
- * next anchor (the app-wide owner swaps cards on arrival), latches after a still
- * [ChartTipCopyLatchMs] into the frozen fill, and — latched — holds through a move toward it
- * long enough to cross a few anchors on the way ([flightGraceMs]). The default close grace, not
- * `0`: grace only ever runs when nothing else is opening, and that is when it has to cover a
- * hover blip on the card itself (a fast scroll that overshot the top of a long breakdown).
- * The Rec chips, the Sankey segments and the risk/return scatter marks share it; each host
- * provides a [LocalHoverFlight] for the hold.
+ * next anchor (the single [ChartTipOwner] swaps cards on arrival), latches after a still
+ * [ChartTipCopyLatchMs] into the frozen fill, and, once latched, holds through a move toward it
+ * long enough to cross a few anchors on the way ([HoverDetailOptions.flightGraceMs]). Terms as
+ * defined on [TipPlacement]. The default close grace, not `0`: grace only ever runs when nothing
+ * else is opening, and that is when it has to cover a hover blip on the card itself (a fast scroll
+ * that overshot the top of a long breakdown). For small chips, chart segments or the marks of a
+ * scatter plot. The hold needs a [HoverFlightState]: the host provides one through
+ * [LocalHoverFlight].
  */
 val FollowsPointerCardOptions: HoverDetailOptions = HoverDetailOptions(
     placement = TipPlacement.FollowsPointer,
@@ -123,11 +128,11 @@ val FollowsPointerCardOptions: HoverDetailOptions = HoverDetailOptions(
 )
 
 /**
- * How a table's row cards open, app-wide ([tutil.ui.DataTableView.rowTooltipOptions] default):
- * beside the name cell, no dwell, and the chart cards' stop-then-reach — a still 400 ms latches
- * the card (frozen tint, stops following), after which a move toward it is held long enough to
- * cross a few rows, and a move away releases it. [DataTableView] provides the [LocalHoverFlight]
- * the hold needs unless a host (Bird's Eye's paired tables) already has.
+ * How a table's row cards open: beside the name cell, no dwell, and the chart cards'
+ * stop-then-reach. A still [ChartTipCopyLatchMs] latches the card (frozen tint, stops following),
+ * after which a move toward it is held long enough to cross a few rows, and a move away releases
+ * it. The hold needs a [HoverFlightState]: the table, or a host holding several tables, provides
+ * one through [LocalHoverFlight].
  */
 val TableRowCardOptions: HoverDetailOptions = HoverDetailOptions(
     placement = EndOfAnchor,
@@ -137,33 +142,34 @@ val TableRowCardOptions: HoverDetailOptions = HoverDetailOptions(
 
 /**
  * [TableRowCardOptions] for a card hung off an [InfoChip]: the same timing, but the card opens to
- * the chip's **left**. Every host puts its chips at the right — the statement tables' value
- * columns (BS / CF last; Sales / Inv's After, which opens left too so the card is in one place on
- * all three), and the collection editor's action cluster — so the room, and the item's name, are
- * to the left.
+ * the chip's **left**. Chips usually sit at the right, in a table's last value column or in a list
+ * row's cluster of action buttons, so the room, and the item's name, are to the left. A table
+ * whose chip column is not last still uses this, so the card opens in the same place on every
+ * table.
  */
 val InfoChipCardOptions: HoverDetailOptions = TableRowCardOptions.copy(placement = StartOfAnchor)
 
 
 /**
  * How a [HoverDetailPopup] card opens: where, how wide, how fast, and in what chrome. One value so
- * a host with several rows configures them once ([tutil.ui.DataTableView.rowTooltipOptions]).
+ * a host with several rows (a table) configures them once.
  *
- * @param placement    Where the card opens — see [TipPlacement] and the note above.
- * @param maxWidth     The card's width cap. A parked card is capped to the table it parks over.
- * @param intentDelayMs Dwell before the card opens. The default keeps a quick sweep across a row
- *                     from flashing a card that covers it; a **parked** card covers nothing the
- *                     hand is near, so its host passes `0` and the card simply replaces itself as
- *                     the pointer moves down the rows.
+ * @param placement    Where the card opens: see [TipPlacement] and [BelowAnchorAtPointer].
+ * @param maxWidth     The card's width cap. A host that parks a card over a table usually passes
+ *                     that table's width.
+ * @param intentDelayMs Dwell before the card opens. The default is `0`, so the card is there when
+ *                     the eye arrives and simply replaces itself as the pointer moves down the
+ *                     rows. Pass a dwell for an [TipPlacement.UnderPointer] card over dense
+ *                     anchors, so a quick sweep across them does not flash a card over each.
  * @param closeDelayMs Grace after the pointer leaves both anchor and card before it closes. Lets a
  *                     reader cross into the card to copy from it; `0` for a parked card, where the
  *                     next row's card takes its place at once.
  * @param frosted      Chart-tip chrome — frosted white, see-through — instead of the theme surface.
  * @param frostedAlpha Fill alpha when frosted; null keeps the shared wash.
- * @param frostedTint  Wash the frost toward a hue, very faintly — the beam's asset blue or liability
- *                     rose, so a parked card still says which side it came from.
+ * @param frostedTint  Wash the frost toward a hue, very faintly: the color of the series or side the
+ *                     card describes, so a parked card still says where it came from.
  * @param lightContent Compose the card's contents under the light color scheme regardless of the
- *                     app theme — required with [frosted], whose surface is white by construction.
+ *                     app theme; required with [frosted], whose surface is white by construction.
  */
 data class HoverDetailOptions(
     val placement: TipPlacement = TipPlacement.UnderPointer,
@@ -176,17 +182,18 @@ data class HoverDetailOptions(
     val lightContent: Boolean = false,
     /**
      * Wash the standard (solid, theme) card toward a hue, faintly — [SurfaceTintStrength] of the
-     * way. The Bird's Eye asset blue / liability rose on its tables' cards: the side is read at a
-     * glance, and the card is otherwise the Balance Sheet's. For the frosted card, see [frostedTint].
+     * way. For two tables read side by side, each table's own color on its cards: the side is
+     * read at a glance, and the card is otherwise the standard one. For the frosted card, see
+     * [frostedTint].
      */
     val surfaceTint: Color? = null,
     /**
      * For a card the pointer is not inside (parked, or riding beside it): how long it stays open
-     * after the pointer leaves the anchor **heading toward it**, so a reader can cross the other table to copy from or scroll the card. During
-     * that flight the rows crossed do not raise their own cards — see [HoverFlightState]. `0`
-     * (default) gives no such grace; the Bird's Eye tables pass a full second. The grace is for
-     * **arriving** only: once the pointer has been on the card, leaving it closes after the plain
-     * [closeDelayMs].
+     * after the pointer leaves the anchor **heading toward it**, so a reader can cross other rows
+     * (or another table) to copy from or scroll the card. During that flight the rows crossed do
+     * not raise their own cards; see [HoverFlightState]. `0` (default) gives no such grace; a pair
+     * of side-by-side tables might pass a full second. The grace is for **arriving** only: once the
+     * pointer has been on the card, leaving it closes after the plain [closeDelayMs].
      */
     val flightGraceMs: Long = 0,
     /**
@@ -194,44 +201,48 @@ data class HoverDetailOptions(
      * anchor at the pointer's y — not parked, not under the pointer): dwell with the pointer still
      * before the card **latches** — repaints in the frozen tint, stops following, and on the next
      * move off the anchor in *any* direction holds for [flightGraceMs] so the reader can get into
-     * it to copy; a move away releases it. The chart cards' pin, in Compose. `0` (default) never
-     * latches; the tables, Rec chips and Sankey pass the charts' own [ChartTipCopyLatchMs].
+     * it to copy; a move away releases it. The canvas cards' latch, in Compose. `0` (default) never
+     * latches; [TableRowCardOptions] and [FollowsPointerCardOptions] pass [ChartTipCopyLatchMs].
      */
     val latchDelayMs: Long = 0,
     /**
      * The reader can drag the card's bottom-right corner to resize it. **On by default**: every card
      * through this host is a content card — the one-line hints go through [HoverTooltip] — and a
      * table or breakdown is exactly what a reader wants wider or taller than the default caps. The
-     * card hugs its content as before until dragged; the grip shows only while the pointer is on it.
+     * card hugs its content until dragged; the grip shows only while the pointer is on it.
      * Pass `false` for a card whose size is part of its meaning.
      */
     val resizable: Boolean = true,
     /**
      * The [HoverCardSizes] slot a resize is remembered in. Null (default) is this options value
-     * itself — one slot per card kind ([TableRowCardOptions], [DescriptionCardOptions], …). A host
-     * whose cards differ in shape from others of the same kind names its own (each
-     * [tutil.ui.DataTableView] keys by its table).
+     * itself, so one slot per card kind ([TableRowCardOptions], [InfoChipCardOptions], …). A host
+     * whose cards differ in shape from others of the same kind names its own (a table might key by
+     * its own identity).
      */
     val sizeKey: Any? = null,
 )
 
 /**
- * The shared latch behind [HoverDetailOptions.flightGraceMs]: **one** pointer "in flight" toward
- * a parked card, for every [HoverDetailPopup] under the provider.
+ * The shared state behind [HoverDetailOptions.flightGraceMs]: **one** pointer "in flight" toward
+ * a card (see [TipPlacement] for the term), for every [HoverDetailPopup] under the provider.
  *
- * The problem it solves is geometric. An asset row's card parks over the liabilities and a
- * liability's over the assets, so reaching either means crossing the *other* table's rows — each
- * of which would, with no timers, instantly raise its own card and take the one the reader was
- * heading for. So when a pointer leaves a row moving toward its card (horizontal motion, toward the
- * card's side — the next row down is a vertical move and does not count), the departing popup
- * declares a flight for its placement: it stays open, and rows whose card would park **elsewhere**
- * hold their fire. Rows whose card parks in the *same* corner still replace it at once — those are
- * the reader's own side, being read. The flight ends when the pointer reaches the card (the card's
- * own hover keeps it open from there), when it lands back on a row of the same side, or when the
- * grace runs out, at which point whatever row the pointer is on opens normally.
+ * The problem it solves is geometric. With two tables side by side, a left-table row's card parks
+ * over the right table and a right-table row's over the left, so reaching either means crossing
+ * the *other* table's rows, each of which would, with no timers, instantly raise its own card and
+ * take the one the reader was heading for. So when a pointer leaves a row moving toward a parked
+ * card (horizontal motion, toward the card's side; the next row down is a vertical move and does
+ * not count), the departing popup declares a flight for its placement: it stays open, and rows
+ * whose card would park **elsewhere** hold their fire. Rows whose card parks in the *same* corner
+ * still replace it at once: those are the reader's own side, being read. The flight ends when the
+ * pointer reaches the card (the card's own hover keeps it open from there), when it lands back on
+ * a row of the same side, or when the grace runs out, at which point whatever row the pointer is
+ * on opens normally.
  *
- * Provided by the host of the paired tables ([LocalHoverFlight]); unprovided, there is no flight
- * and a parked card closes as soon as its row is left.
+ * A latched card beside its anchor declares a flight too, keyed by its own popup. The rows the
+ * pointer crosses then hold only while [headingOk] says the pointer is still reaching for it.
+ *
+ * The host provides one through [LocalHoverFlight] (a table, or a host holding several tables).
+ * Unprovided, there is no flight, and a card closes as soon as its anchor is left.
  */
 class HoverFlightState {
     /**
@@ -282,14 +293,19 @@ class HoverFlightState {
 val LocalHoverFlight = compositionLocalOf<HoverFlightState?> { null }
 
 /**
- * **Esc drops a latched card**: once a card has tinted and the reader has
- * gone to it, Esc closes it — the way out of a card that is now in the way, without steering
- * the pointer off it. One slot, app-wide, because only one card is ever up ([LocalChartTipOwner]).
+ * **Esc drops a latched card** (see [TipPlacement] for "latched"): once a card has tinted and the
+ * reader has gone to it, Esc closes it. It is the way out of a card that is now in the way, without
+ * steering the pointer off it. One slot, process-wide, because only one card is ever up
+ * ([ChartTipOwner]).
  *
  * A latched card [hold]s the slot with how to close itself and [release]s it when it unlatches or
- * closes; the window's key handler calls [escape] on Esc and consumes the key **only** when a card
- * was closed, so Esc keeps every other meaning (closing an editor, a dialog) when no card is up.
- * Held by the Compose cards ([HoverDetailPopup]) and the canvas chart cards ([rememberChartTipPin]).
+ * closes. [HoverDetailPopup] does this for its own cards, and a host that draws latching cards on a
+ * canvas can do the same.
+ *
+ * **The host wires the key.** The kit installs no key handler: the host's window-level key handler
+ * calls [escape] on Esc and consumes the key **only** when it returns true, so Esc keeps every
+ * other meaning (closing an editor, a dialog) when no card is up. Without that call, Esc does not
+ * close a card.
  */
 object LatchedTipEscape {
     private var owner: Any? = null
@@ -319,8 +335,9 @@ object LatchedTipEscape {
 
 /**
  * Whether a pointer leaving a row at velocity [velocity] (window px per event) from [exit] is
- * heading for a card at [card]: the move is mostly horizontal, and in the card's direction. Pure,
- * for the test.
+ * heading for a card at [card]. With [horizontalOnly] (the default) the move must be mostly
+ * horizontal and toward the card's center x; otherwise any move that closes on the card's center
+ * counts. False when the pointer is not moving. Pure, for the test.
  */
 fun isHeadingToward(exit: Offset, velocity: Offset, card: IntRect, horizontalOnly: Boolean = true): Boolean {
     if (velocity == Offset.Zero) return false
@@ -339,32 +356,36 @@ fun isHeadingToward(exit: Offset, velocity: Offset, card: IntRect, horizontalOnl
 /** A latched card ignores pointer moves shorter than this (px) when deciding "away" — hand jitter. */
 private const val LatchReleaseJitterPx = 3f
 
-/** Grace period after the pointer leaves both anchor and popup before the popup closes. */
-/** `400` (2026-09-20, was 250): long enough to cross the gap from the row into a card parked beside it. */
+/**
+ * Grace period after the pointer leaves both anchor and popup before the popup closes: long enough
+ * to cross the gap from a row into a card placed beside it.
+ */
 private const val HOVER_CLOSE_MS = 400L
 
 /**
- * The **resting** state of hover-detail surfaces, app-wide: `true` (the default) = details show on
- * hover; `false` = they stay hidden until deliberately revealed. Provided by [AppFrame] from a
- * persisted user setting (a toolbar toggle flips it); unprovided it is `true`, so every host — demo
- * app, tests, non-desktop targets — keeps today's "hover shows the detail" behavior.
+ * The **resting** state of hover-detail surfaces: `true` (the default) means details show on
+ * hover; `false` means they stay hidden until deliberately revealed. **The host provides it**,
+ * typically from a persisted user setting behind a toolbar toggle. Unprovided it is `true`, so a
+ * host that never thinks about it (a demo, a test, a non-desktop target) gets "hover shows the
+ * detail".
  *
  * Combined with [LocalAltPressed] via **XOR** (see [hoverDetailsEnabled]): holding Alt transiently
- * flips the resting state — it *suppresses* while the default is on (the presenting case: point and
- * move without popups erupting) and *peeks* while the default is off. This gates rich
- * [HoverDetailPopup] cards, canvas chart bar tooltips (BS/CF), region-map hover highlight, and rich
- * `interactive` [HoverTooltip] cards from one seam.
+ * flips the resting state. It *suppresses* while the default is on (the presenting case: point and
+ * move without popups erupting) and *peeks* while the default is off. This gates the rich
+ * [HoverDetailPopup] cards and the rich `interactive` [HoverTooltip] cards, and a host can gate its
+ * own canvas readouts or hover highlights on [hoverDetailsEnabled] too.
  *
  * The must-have tooltips stay out of it and are deliberately never suppressed: text-elision
- * ([OverflowTooltipText]) and one-line [HoverTooltip]/[HelpIcon] hints. A truncated label with no way
- * to read it is a dead end rather than a distraction, and a one-word "what does this button do" is
- * not what interrupts a presentation — the dense explanatory cards are, which is why those joined.
+ * ([OverflowTooltipText]) and one-line [HoverTooltip] hints. A truncated label with no way to read
+ * it is a dead end rather than a distraction, and a one-word "what does this button do" is not what
+ * interrupts a presentation; the dense explanatory cards are, which is why only those are gated.
  */
 val LocalHoverDetailsDefault = compositionLocalOf { true }
 
 /**
- * Whether the Alt/Option modifier is currently held, tracked app-wide. Provided by the desktop driver
- * (a window-level key listener); `false` when unprovided (non-desktop targets, tests). Modifiers are
+ * Whether the Alt/Option modifier is currently held. **The host provides it**, from a window-level
+ * key listener; the kit tracks no keys itself. `false` when unprovided (non-desktop targets,
+ * tests). Modifiers are
  * *level-triggered* — the OS holds the bit for the duration of the press with no auto-repeat — so this
  * reads as a steady flag, not an event stream (unlike a character key such as Space, which would flood
  * repeat events). Read together with [LocalHoverDetailsDefault] via [hoverDetailsEnabled].
@@ -373,41 +394,44 @@ val LocalAltPressed = compositionLocalOf { false }
 
 /**
  * Live whether rich hover details should show right now: [LocalHoverDetailsDefault] XOR
- * [LocalAltPressed]. Shared by [HoverDetailPopup], canvas chart tooltips, and region-map hover so
- * one Alt press / toolbar default covers every dense hover surface that would otherwise interrupt a
- * presentation.
+ * [LocalAltPressed]. Read by [HoverDetailPopup] and interactive [HoverTooltip] cards; a host can
+ * read it for its own canvas readouts and hover highlights, so one Alt press or one toolbar
+ * default covers every dense hover surface that would otherwise interrupt a presentation.
  */
 @Composable
 fun hoverDetailsEnabled(): Boolean =
     LocalHoverDetailsDefault.current != LocalAltPressed.current
 
 /**
- * Wraps an anchor [content] so that hovering it (after a brief intent delay) opens a persistent
- * detail [Popup] carrying [detail] in a [TooltipCard]. Copy-out is via a copy button in [detail] (the
- * app's "everything is copyable" standard); drag-selection inside the card is disabled
- * because the popup lives in a separate layout hierarchy from any enclosing `SelectionContainer`
+ * Wraps an anchor [content] so that hovering it (after [HoverDetailOptions.intentDelayMs], zero
+ * by default) opens a persistent detail [Popup] carrying [detail] in a [TooltipCard]. Copy-out is
+ * via a copy button in [detail] (a [CopyableTooltipBody] has one); drag-selection inside the card
+ * is disabled because the popup lives in a separate layout hierarchy from any enclosing `SelectionContainer`
  * (e.g. a table's), and letting the outer selection span that boundary crashes with "layouts are not
  * part of the same hierarchy".
  *
- * The card is positioned **under the cursor** (its top-left a hair up-left of the pointer) rather
- * than at the anchor's corner: a wide anchor (like a full-width table row) would otherwise place the
- * card away from a mid-row cursor, so neither the anchor nor the card would be hovered and the popup
- * would flash open/closed. Placing it under the cursor guarantees the card is hovered the moment it
- * opens. Hover = peek (persists); the anchor keeps whatever click behavior it already has.
+ * Where the card opens is [HoverDetailOptions.placement]. The default, [TipPlacement.UnderPointer],
+ * puts the card's top-left a hair up-left of the pointer rather than at the anchor's corner: a wide
+ * anchor (like a full-width table row) would otherwise place the card away from a mid-row cursor,
+ * so neither the anchor nor the card would be hovered and the popup would flash open/closed. Placing
+ * it under the cursor guarantees the card is hovered the moment it opens. The other placements
+ * keep the pointer on the anchor instead; see [BelowAnchorAtPointer]. Hover = peek (persists); the
+ * anchor keeps whatever click behavior it already has.
  *
  * Dismissal is driven by **hover state** of the anchor and the popup (with a short grace delay),
  * not by raw pointer-exit or click-outside — both of which fight nested popups. In particular a copy
- * button with a [DropdownMenu] is a sibling popup; while it is open the pointer is over neither the
+ * button with a dropdown menu is a sibling popup; while it is open the pointer is over neither the
  * anchor nor this popup, so such a copy button reports through [LocalPopupDismissSuppressor] to keep
  * us open until a selection is made. `dismissOnClickOutside` is off for the same reason (a click in
  * the dropdown would otherwise read as "outside" and tear everything down before the copy runs).
  *
  * The card surface also resets [LocalTopEndOverlayInset] to `0.dp`. CompositionLocals flow into
- * Popup content, so without that reset a parent [HelpContainer] ShareBoth would left-shift any
- * [CopyableDataTable] title-row copy on this card as if the parent's FeatureToolbar still covered
- * the corner — which it does not on a separate popup surface.
+ * Popup content, so without that reset a parent that overlays a control on its top-end corner would
+ * left-shift any top-end control on this card (a title-row copy button) as if the parent's overlay
+ * still covered the corner, which it does not on a separate popup surface.
  *
- * @param detail   The rich, copyable popup body (wrapped here in a padded [Surface] card).
+ * @param detail   The rich, copyable popup body, wrapped here in a [TooltipCard] with 10 dp of
+ *                 padding.
  * @param modifier Applied to the anchor wrapper; hover is detected over its bounds. Scope it to the
  *                 element whose meaning needs explaining, not a whole row of unrelated controls.
  * @param onClick  When non-null, the whole card (its padded border included) is clickable and runs
@@ -438,7 +462,8 @@ fun HoverDetailPopup(
     // A corner-grip drag is under way ([HoverDetailOptions.resizable]): the pointer may leave the
     // card while growing it, so this holds the card open the way an open copy menu does.
     var resizing by remember { mutableStateOf(false) }
-    // One card app-wide: opening claims the token; losing it (another card opened) closes at once.
+    // One card at a time ([ChartTipOwner]): opening claims the token; losing it (another card
+    // opened) closes at once.
     val owner = LocalChartTipOwner.current
     val token = remember { Any() }
     val held = owner.holds(token)
@@ -473,8 +498,8 @@ fun HoverDetailPopup(
     // A parked card's rows always hold (reaching a card parked over the other table means crossing
     // that table's rows). For a card beside its anchor, the rows crossed hold while the pointer is
     // still reaching for it ([HoverFlightState.headingOk]): a slow glide down a table after a dwell
-    // latched row A's card must not leave rows B, C, D silent for the length of the grace — that
-    // read as "only some cards show" — but a reach for A's card that crosses B must not raise B's.
+    // latched row A's card must not leave rows B, C, D silent for the length of the grace (it would
+    // read as "only some cards show"), but a reach for A's card that crosses B must not raise B's.
     val foreignFlight = flight?.toward.let { it != null && it != flightKey }
     val heldByFlight = foreignFlight && (parked || flight?.headingOk == true)
     DisposableEffect(token) {
@@ -492,8 +517,8 @@ fun HoverDetailPopup(
     // pointer left the mark" — the same thing as leaving the anchor, one level down. So it takes the
     // same path: an unlatched card closes at once (it was following the pointer, and nothing is
     // under it now), and a **latched** card stays for the close/flight logic below, so a reader who
-    // settled on a mark can travel off it to the card. Closing unconditionally here is what made the
-    // risk/return scatter's card tint and then vanish on the first move toward it.
+    // settled on a mark can travel off it to the card. Closing unconditionally here would make a
+    // latched card vanish on the first move toward it.
     LaunchedEffect(enabled) { if (!enabled && visible && !latched) visible = false }
     val anchorActive = anchorHovered && enabled
     val latchDelay = options.latchDelayMs.takeIf { it > 0 && options.placement !is TipPlacement.UnderPointer && !parked }
@@ -568,8 +593,9 @@ fun HoverDetailPopup(
             if (flight != null && flight.toward == flightKey) flight.clear()
         } else if (!anchorActive && !menuOpen && !resizing) {
             if (visitedCard.value) {
-                // Left the card itself: no flight to wait out, only the ordinary close grace —
-                // which a parked card sets to zero, so it is gone the moment the reader leaves.
+                // Left the card itself: no flight to wait out, only the ordinary close grace,
+                // which a host may set to zero for a parked card so it is gone the moment the
+                // reader leaves.
                 if (options.closeDelayMs > 0) delay(options.closeDelayMs)
                 visible = false
                 return@LaunchedEffect
@@ -591,10 +617,10 @@ fun HoverDetailPopup(
                     visible = false
                 } finally {
                     // Whatever ends the wait — expiry, arrival, or a cancellation from elsewhere
-                    // (another surface's card claimed the owner and closed us, Alt went down, the
+                    // (another card claimed the [ChartTipOwner] and closed us, Alt went down, the
                     // anchor was re-entered) — a flight we declared must not outlive it. Left set,
-                    // every other anchor under this provider holds its fire forever: the Sankey
-                    // went dead to the mouse until this one anchor happened to be hovered again.
+                    // every other anchor under this provider holds its fire forever, and the whole
+                    // surface goes dead to the mouse until this one anchor is hovered again.
                     if (flight.toward == flightKey) flight.clear()
                 }
             } else {
@@ -673,8 +699,8 @@ fun HoverDetailPopup(
                         event.changes.lastOrNull()
                             ?.let { change ->
                                 // An Enter is a jump from wherever the pointer sat on its last visit,
-                                // not a move: measuring a direction from it read a reach for a card as
-                                // a turn away, and the crossed row raised its own card.
+                                // not a move: measuring a direction from it would read a reach for a
+                                // card as a turn away, and the crossed row would raise its own card.
                                 val delta = if (event.type == PointerEventType.Enter) Offset.Zero
                                             else change.position - pointerPos.value
                                 // A real move only; the release/enter samples at the same point
@@ -722,17 +748,17 @@ fun HoverDetailPopup(
                     dismissOnClickOutside = false,
                 ),
             ) {
-                // Popup is a separate surface: clear ShareBoth overlay inset from an enclosing
-                // HelpContainer so CopyableDataTable's title-row copy sits flush trailing (the
-                // parent's overlaid zoom/copy/"?" cluster does not cover this card). Also report
-                // copy-menu open state so hover-dismiss does not tear the card down mid-pick.
+                // Popup is a separate surface: clear the top-end overlay inset inherited from an
+                // enclosing container, so a title-row control on the card sits flush trailing (the
+                // parent's overlaid controls do not cover this card). Also report copy-menu open
+                // state so hover-dismiss does not tear the card down mid-pick.
                 CompositionLocalProvider(
                     LocalPopupDismissSuppressor provides { open -> menuOpen = open },
                     LocalTopEndOverlayInset provides 0.dp,
                 ) {
                     TooltipCard(
-                        // Latched: the same primary wash the calendar band and its card wear —
-                        // "this one is settled; come and get it".
+                        // Latched: the frozen fill ([tipFrozenFill]), which says "this one is
+                        // settled; come and get it".
                         containerColor = (options.surfaceTint?.let { lerp(containerColor, it, SurfaceTintStrength) }
                             ?: containerColor).let { if (latched) tipFrozenFill(it) else it },
                         // The whole card (border included) is clickable when [onClick] is set, so a
@@ -753,9 +779,9 @@ fun HoverDetailPopup(
                         resize = resize,
                     ) {
                         // A frosted card is white by construction; its ink must follow the surface
-                        // it is on, not the app theme (see the beam's tip for the case that found it).
-                        // A card opened from a locally scaled region (the navigation strip) draws at the
-                        // app's own scale, not the region's ([LocalUnscaledDensity]).
+                        // it is on, not the app theme ([HoverDetailOptions.lightContent]).
+                        // A card opened from a locally scaled region (a zoomed-out strip) draws at
+                        // the app's own scale, not the region's ([LocalUnscaledDensity]).
                         val unscaled = LocalUnscaledDensity.current
                         val body: @Composable () -> Unit = {
                             if (unscaled != null) {

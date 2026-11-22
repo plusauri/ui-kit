@@ -19,10 +19,10 @@ import plusauri.ui.MultiButtonSelect
 import plusauri.ui.MultiButtonSelectDefaults
 
 /**
- * Shared metrics for compact [FilterChip] toolbars (Forecaster view toggles, Rec mode chips, etc.).
+ * Shared metrics for compact [FilterChip] toolbars (view toggles, filter chips over a table, etc.).
  *
- * Height and content insets come from [MultiButtonSelectDefaults] Compact so chip rows and
- * segmented multi-selects stay one knob — same single-source-of-truth idea as [CompactButtonDefaults].
+ * Height and content insets come from [MultiButtonSelectDefaults]' compact values so chip rows and
+ * [MultiButtonSelect] toggle rows stay one knob — same single-source-of-truth idea as [CompactButtonDefaults].
  */
 object CompactFilterChipDefaults {
     /** Target chip height — [MultiButtonSelectDefaults.CompactHeight] (28.dp). */
@@ -35,7 +35,7 @@ object CompactFilterChipDefaults {
     val VerticalGap: Dp = 4.dp
 
     /**
-     * Trailing pad under a chip FlowRow (e.g. Rec drill row above the Sankey) — tight so the band
+     * Trailing pad under a chip FlowRow (e.g. a filter row above a chart) — tight so the band
      * does not read as an airy strip under the chips.
      */
     val RowBottomPadding: Dp = 4.dp
@@ -49,7 +49,7 @@ object CompactFilterChipDefaults {
 
 /**
  * A [FilterChip] at desktop/web toolbar density: [CompactFilterChipDefaults.Height], zero forced
- * min interactive size (so Material's ~40.dp min does not win), and [labelMedium] text so labels
+ * min interactive size (so Material's ~40.dp min does not win), and `labelMedium` text so labels
  * still fit the shorter pill.
  *
  * Prefer this over a raw [FilterChip] whenever the chip sits in a dense toggle row.

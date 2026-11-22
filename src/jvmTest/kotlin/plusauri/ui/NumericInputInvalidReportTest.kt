@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test
 
 /**
  * An out-of-range [NumericInput] reports itself to [InvalidFields] under the name on screen: its
- * label, else its [LabeledField] caption. A field with neither reports itself unnamed, and the pane
+ * label, else its [LabeledField] caption. A field with neither reports itself unnamed, and the form
  * names it when it reads the list. The control holds no words of its own for that.
  */
 @OptIn(ExperimentalTestApi::class)

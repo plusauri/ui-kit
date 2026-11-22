@@ -57,8 +57,10 @@ import kotlin.math.round
  * **Focus selects the value**, by click or by Tab, so typing replaces it; a second click places the
  * caret as usual. Values are right-aligned, flush against any suffix.
  *
- * Prefix/suffix strings are shown via Material3's `OutlinedTextField` slots so they
- * are never part of the raw text value — no cursor-position bookkeeping needed.
+ * The field is a `BasicTextField` drawn inside Material3's
+ * `OutlinedTextFieldDefaults.DecorationBox`. Prefix/suffix strings go in the decoration's
+ * prefix/suffix slots, so they are never part of the raw text value and need no cursor-position
+ * bookkeeping.
  *
  * [onValueChange] receives `null` when the field is empty or the entry is still
  * in-progress (e.g. "-" or "3."). Callers should treat `null` as "no committed
@@ -67,12 +69,12 @@ import kotlin.math.round
  * **Non-null backing is fine.** A caller whose sink cannot hold `null` may coerce on every change
  * (`onValueChange = { x = it ?: 0.0 }`) and push the result straight back in as [value]. While the
  * field has focus its own text is authoritative: an external [value] is acknowledged but does not
- * rewrite the buffer, so the coerced default cannot round-trip into an un-deletable "0" (the trap
- * that used to lock a field the moment the last digit was backspaced). On blur the buffer is
+ * rewrite the buffer, so the coerced default cannot round-trip into an un-deletable "0" the moment
+ * the last digit is backspaced. On blur the buffer is
  * reconciled to [value], so an emptied field shows the default the caller actually stored. The
  * flip side: a *programmatic* change to [value] while the user is typing in this exact field is
- * deferred to blur — which is what a user mid-edit would expect anyway. There is no need for a
- * nullable local mirror or a `lastExternal` guard at the call site.
+ * deferred to blur (or Enter), which is what a user mid-edit would expect anyway. There is no need
+ * for a nullable local mirror or a `lastExternal` guard at the call site.
  *
  * @param value          Current value, or null if the field should appear empty.
  * @param onValueChange  Emitted on every valid edit; null when empty/in-progress.
@@ -104,10 +106,11 @@ import kotlin.math.round
  * @param showSeparator  When true, thousands separators are shown (e.g. 1,234,567).
  * @param enabled        When false the field is non-interactive.
  * @param missingFieldLabel  Identity used to light this field when the user reaches for a
- *                       disabled OK. Defaults to [label], which is the string
- *                       [requiredFields] already names. Pass a different string when the
- *                       control's floating label is not the name the hint uses.
- * @param modifier       Applied to the [OutlinedTextField].
+ *                       disabled OK ([MissingFieldPointer]), and the name it reports to
+ *                       [InvalidFields]. Defaults to [label], which is usually the string the
+ *                       host's list of required fields names. Pass a different string when the
+ *                       control's floating label is not the name that list uses.
+ * @param modifier       Applied to the underlying `BasicTextField`.
  */
 @Composable
 fun NumericInput(
@@ -132,7 +135,7 @@ fun NumericInput(
     enabled: Boolean = true,
     outlined: Boolean = true,
     missingFieldLabel: String? = label,
-    /** Fill behind the digits; null = the theme's. The #Simulations entry tints it by run cost. */
+    /** Fill behind the digits; null = the theme's. A host can tint it to signal the value's cost. */
     containerColor: Color? = null,
     /** Digit color while enabled; null = onSurface. Pairs with a dark [containerColor]. */
     contentColor: Color? = null,
@@ -150,14 +153,14 @@ fun NumericInput(
         mutableStateOf(TextFieldValue(text = text, selection = TextRange(text.length)))
     }
     // Focus selects the whole value, so the first keystroke replaces it rather than landing wherever
-    // the click put the caret. A design partner (2026-09-22, the cash rate): "when I click in here, I'd expect
-    // to see that just blank out or to highlight it and overwrite it". A click focuses first and
-    // places its caret after — on press *and* again on release — so the selection made on focus
-    // would be wiped by the very click that caused it. While this latch is set, caret-only changes
-    // are absorbed. It clears on the next press into the already-focused field (a deliberate caret
-    // placement), on a drag selection, on any key (so a field reached by Tab, where no placing click
-    // follows, does not swallow the first arrow key), and on blur. Bookkeeping, not display state,
-    // hence not snapshot state.
+    // the click put the caret: a user who clicks into a number field expects to overwrite it, not
+    // to edit around the old digits. A click focuses first and places its caret after — on press
+    // *and* again on release — so the selection made on focus would be wiped by the very click
+    // that caused it. While this latch is set, caret-only changes are absorbed. It clears on the
+    // next press into the already-focused field (a deliberate caret placement), on a drag
+    // selection, on any key (so a field reached by Tab, where no placing click follows, does not
+    // swallow the first arrow key), and on blur. Bookkeeping, not display state, hence not
+    // snapshot state.
     val selectAllOnFocus = remember { object { var pending = false } }
 
     /** Rewrites the buffer from [value] when the two disagree — see [numericReconciledText]. */
@@ -182,13 +185,13 @@ fun NumericInput(
     val valueOutOfRange = parsedValue != null && range != null && parsedValue !in range
     val isOutOfRange = showError || valueOutOfRange
 
-    // Red is not enough: report the value to the open edit pane, which refuses OK and names this
-    // field until it is back in range ([InvalidFields]). Named by its own label, else its
-    // [LabeledField] caption, so the pill uses the words on screen — and matches the label the
-    // "point at the field" highlight addresses.
+    // Red is not enough: report the value to the host's open form ([InvalidFields]), which can
+    // block OK and name this field until it is back in range. Named by its own label, else its
+    // [LabeledField] caption, so the form uses the words on screen, and the name matches the label
+    // the "point at the field" highlight addresses ([MissingFieldPointer]).
     val invalidFields = LocalInvalidFields.current
     if (invalidFields != null) {
-        // Null when the field has no name at all: the pane names it ([InvalidFields.labels]).
+        // Null when the field has no name at all: the form names it ([InvalidFields.labels]).
         val reportAs = missingFieldLabel ?: label ?: LocalFieldCaption.current
         val reportKey = remember { Any() }
         DisposableEffect(invalidFields, valueOutOfRange, reportAs) {
@@ -450,7 +453,7 @@ fun NumericInput(
  * @param blankWhenZero When true, an external `0` renders empty (see [NumericInput]).
  * @param showSeparator When true, thousands separators are shown (e.g. 1,234,567).
  * @param enabled       When false the field is non-interactive.
- * @param modifier      Applied to the underlying [OutlinedTextField].
+ * @param modifier      Applied to the underlying `BasicTextField`.
  */
 @Composable
 fun IntegerInput(

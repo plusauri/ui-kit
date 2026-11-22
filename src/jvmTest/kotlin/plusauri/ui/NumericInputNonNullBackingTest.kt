@@ -25,14 +25,14 @@ import org.junit.jupiter.api.Test
  * The "non-null backing" round trip on [NumericInput] / [PercentInput].
  *
  * A caller whose sink cannot hold `null` coerces on every change — `onValueChange = { x = it ?: 0.0 }`
- * — and pushes the result straight back in as `value`. Before the focus-aware sync, that echo
- * rewrote the buffer mid-edit: backspace the last digit, the coerced default re-rendered as an
- * un-deletable "0" (or "65", or whatever the default was) and the field was locked.
+ * — and pushes the result straight back in as `value`. Without the field's focus-aware sync, that
+ * echo would rewrite the buffer mid-edit: backspace the last digit, the coerced default re-renders
+ * as an un-deletable "0" (or "65", or whatever the default is) and the field is locked.
  *
- * These drive the real control through real keystrokes and a real focus change, because the bug
- * lived in the round trip between the field and its parent — calling `onValueChange` directly
- * would pass on the broken code. Each test is written as the plain anti-pattern, with no mirror or
- * `lastExternal` guard at the call site: that is the contract now.
+ * These drive the real control through real keystrokes and a real focus change, because the risk
+ * lives in the round trip between the field and its parent — calling `onValueChange` directly
+ * would pass even if that round trip were broken. Each test is written as the plain anti-pattern,
+ * with no mirror or `lastExternal` guard at the call site: that is the supported contract.
  */
 @OptIn(ExperimentalTestApi::class)
 class NumericInputNonNullBackingTest {

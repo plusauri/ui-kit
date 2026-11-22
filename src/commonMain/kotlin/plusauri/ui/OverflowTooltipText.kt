@@ -26,8 +26,8 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 
 /**
- * Max width for the full-text hover card on an elided label. Long Sales/Inv. Why strings (and
- * similar multi-segment cells) wrap instead of stretching one horizontal line across the window.
+ * Max width for the full-text hover card on an elided label. Long multi-segment labels (a table
+ * cell that joins several reasons, say) wrap instead of stretching one line across the window.
  * Matches the spirit of [HoverTooltip]'s default [maxWidth].
  */
 private val OverflowTooltipMaxWidth: Dp = 280.dp
@@ -57,15 +57,15 @@ private val OverflowTooltipMaxWidth: Dp = 280.dp
  *   `SingleChoiceSegmentedButtonRow` (`width(IntrinsicSize.Min)`) makes — it throws.
  *
  * A plain [Box] avoids both. The tooltip is a hover-driven overlay [Popup] (same approach as
- * [HelpIcon]) so it never re-measures the text.
+ * [HoverTooltip]) so it never re-measures the text.
  *
  * @param text     The full label text (also the tooltip contents when clipped).
  * @param modifier Layout modifier bounding the width (e.g. `widthIn(max = …)` or `weight(…)`).
  * @param style    Text style; defaults to the ambient [LocalTextStyle].
  * @param color    Text color; [Color.Unspecified] defers to [style].
  * @param contentAlignment Where the text sits when it is *shorter* than the bound — the box fills
- *                  the width it was given, so a label that used to size to its own content and be
- *                  centered by its parent needs [Alignment.Center] here to stay centered. Defaults
+ *                  the width it was given, so a label meant to be centered by its parent needs
+ *                  [Alignment.Center] here to stay centered. Defaults
  *                  to [Alignment.TopStart], matching a plain [Box].
  * @param maxLines Lines before ellipsis. At the default 1 the text never wraps (`softWrap = false`),
  *                  which is what makes it clip horizontally and report the overflow; above 1 it
@@ -149,21 +149,21 @@ fun OverflowTooltipText(
                 properties = PopupProperties(focusable = false),
             ) {
                 // The Popup renders in its own layout hierarchy but inherits any enclosing
-                // SelectionContainer (e.g. a copyable DataTable cell). Without DisableSelection the
+                // SelectionContainer (e.g. a copyable table cell). Without DisableSelection the
                 // tooltip's Text registers as a selectable there, and starting a drag-selection on the
                 // anchor then crashes SelectionManager with "layouts are not part of the same
                 // hierarchy" (it can't sort selectables across the two hierarchies). The tooltip text
                 // shouldn't be selectable anyway.
-                // The app's one hover-card chrome ([TooltipCard]) rather than a second hand-rolled
+                // The kit's one hover-card chrome ([TooltipCard]) rather than a second hand-rolled
                 // Surface: an elision reveal and a rich hover card are the same idea arriving by two
-                // routes, and they should not look like two different things. TooltipCard already
-                // applies the DisableSelection this used to do itself.
+                // routes, and they should not look like two different things. TooltipCard applies
+                // that DisableSelection itself.
                 TooltipCard(maxWidth = OverflowTooltipMaxWidth) {
                     Text(
                         // Plain string plus the flag-font span only. Color spans from the label are
                         // dropped: a color chosen for the surface is not guaranteed on this card.
-                        // Soft-wrap under a width cap so multi-segment Why (and other long labels)
-                        // stack vertically instead of one ultra-wide tooltip.
+                        // Soft-wrap under a width cap so long, multi-segment labels stack
+                        // vertically instead of one ultra-wide tooltip.
                         text = tooltip,
                         style = MaterialTheme.typography.bodySmall,
                         softWrap = true,

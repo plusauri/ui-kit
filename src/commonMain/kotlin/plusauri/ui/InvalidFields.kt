@@ -4,18 +4,19 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
- * The fields in an open edit pane that hold a value outside their own range — the half of "what
- * stops OK" that the controls know and the editor's `requiredFields` list does not.
+ * The fields in an open edit form that hold a value outside their own range: the half of "what
+ * should block saving" that the controls know and the form's own list of required fields does not.
  *
- * **Why.** A ranged number field has always turned red on a value outside its range and then saved
- * it anyway. That is how a birth year of `1063` reached the forecast and crashed the app: the box
- * was red, OK was live. Every ranged [NumericInput] now reports here while it is out of range, and
- * the edit pane ([CollectionEditorComponent]) refuses OK and names the field in its `Needs:` row —
- * across every editor, with no per-editor code. Rules that need two fields at once (retirement after
- * death) stay in the editor's own list; a single control cannot see them.
+ * **Why.** A field that only turns red on an out-of-range value still lets the form save it, so a
+ * nonsense value (a year of `1063`) reaches code that was never meant to see it. Every ranged
+ * [NumericInput] reports here while it is out of range. The host provides an instance through
+ * [LocalInvalidFields] around the form, and the host's form reads [labels] to disable its OK
+ * button and name the fields that need attention, with no per-form code. Rules that need two
+ * fields at once (an end date before a start date) stay in the form's own checks; a single
+ * control cannot see them.
  *
  * A field withdraws its report when it comes back in range or leaves the composition, so a section
- * the reader folds away does not hold OK hostage.
+ * the reader folds away does not keep the form from saving.
  */
 class InvalidFields {
     /** One field's report. [label] is null for a field with no name of its own. */
@@ -25,7 +26,7 @@ class InvalidFields {
 
     /**
      * The names of the fields out of range now, in report order, each once. A field with no name
-     * of its own reads as [unnamed], which the pane supplies because the pane owns the words; the
+     * of its own reads as [unnamed], which the form supplies because the form owns the words; the
      * control that reported it does not.
      */
     fun labels(unnamed: String): List<String> = entries.values.map { it.label ?: unnamed }.distinct()
@@ -41,12 +42,15 @@ class InvalidFields {
     }
 }
 
-/** The open pane's [InvalidFields]; null outside one, where a red field is only red. */
+/**
+ * The open form's [InvalidFields], provided by the host. Null outside one, where a red field is
+ * only red.
+ */
 val LocalInvalidFields = staticCompositionLocalOf<InvalidFields?> { null }
 
 /**
  * The caption of the [LabeledField] a control sits in. A control that reports itself (to
- * [InvalidFields]) uses it when it has no label of its own, so the `Needs:` pill names the field
- * with the very words on screen.
+ * [InvalidFields]) uses it when it has no label of its own, so the host can name the field with
+ * the very words on screen.
  */
 val LocalFieldCaption = staticCompositionLocalOf<String?> { null }

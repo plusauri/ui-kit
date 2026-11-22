@@ -5,7 +5,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.vector.ImageVector
 
-// The words and the one glyph the kit's controls cannot know. The product owns i18n and its brand,
+// The words and the one glyph the kit's controls cannot know. The host app owns i18n and its brand,
 // so it provides these once, beside its own strings, and every control under it reads them. Popups
 // inherit composition locals, so a hover card opened anywhere below sees the same values.
 //
@@ -27,7 +27,7 @@ class CopyWords(val copy: String, val copied: String, val hint: String)
 /** The words for [CopyWords]; see the note at the top of this file. */
 val LocalCopyWords = staticCompositionLocalOf { CopyWords(copy = "", copied = "", hint = "") }
 
-/** The glyph [CopyIconButton] draws at rest. The product provides its branded copy plate. */
+/** The glyph [CopyIconButton] draws at rest. A host may provide its own branded copy glyph. */
 val LocalCopyGlyph = staticCompositionLocalOf<ImageVector> { Icons.Default.ContentCopy }
 
 /** What an empty [YearInput] says before anything is typed. */

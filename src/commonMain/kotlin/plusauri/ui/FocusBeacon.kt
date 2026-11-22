@@ -14,16 +14,19 @@ import androidx.compose.ui.input.key.utf16CodePoint
 /**
  * **Where am I?** A plain `?` pulses whatever holds keyboard focus, so a reader who has lost track
  * of it sees it again ([keyboardFocusRing] answers [pings]). When nothing holds focus — the state in
- * which a reader is most lost — nothing can pulse, so the window counts it as [unanswered] and the
- * Simulator says so, with how to start again.
+ * which a reader is most lost — nothing can pulse, so it counts as [unanswered], and the host can
+ * show a message saying how to get focus back.
  *
- * Taken only where nothing else wants the key: a text field types its `?` as always.
+ * The kit does not listen for the key itself. The host's window-level key handler checks
+ * [isWhereAmI] and calls [ping] when a control holds focus, or [nothingFocused] when none does.
+ * It should do so only where nothing else wants the key: a text field types its `?` as always.
+ *
+ * This is process-wide state: every window in the process shares one beacon.
  */
 object FocusBeacon {
     /**
-     * The key that asks. The kit owns it so the ring works without the product's shortcut table;
-     * the product documents the same key there (`tutil.shortcuts.ControlKey.WhereAmI`), and a test
-     * in `:tutil-ui` holds the two to the same glyph.
+     * The key that asks. The kit owns it so the ring works without a host shortcut table. A host
+     * that lists its shortcuts should read the key from here, or test that its list agrees.
      */
     const val WHERE_AM_I: Char = '?'
 

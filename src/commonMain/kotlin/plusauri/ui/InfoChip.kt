@@ -23,20 +23,21 @@ import androidx.compose.ui.unit.dp
 
 /**
  * A pill that says "hover me for the detail card" — the one explicit place an item's hover card
- * opens from. Two hosts, one look:
+ * opens from. Two typical uses, one look:
  *
- * - **A table value** — a [DataTableView] row card under [RowTooltipAnchor.ValueChip]: the Balance
- *   Sheet's End value, Cash Flow's Value, Sales / Inv's After. [text] is the cell's own text in its
- *   own style and color, so it reads as the same number as its plain neighbors, and a row with no
- *   card keeps plain text — the pills themselves mark which rows have one.
- * - **An "Info" button** — beside Edit / Delete on a [CollectionEditorComponent] item.
+ * - **A table value**: the chip wraps the value cell of a row that has a card. [text] is the cell's
+ *   own text in its own style and color, so it reads as the same number as its plain neighbors,
+ *   and a row with no card keeps plain text: the pills themselves mark which rows have one.
+ * - **An "Info" button**: beside Edit / Delete on a list item.
  *
- * **Why an explicit chip.** A hover zone on the name (with its underbar cue) spans the widest thing
- * on the row, so a reader scanning a list opened cards they never asked for — a design partner found it "a bit
- * aggressive". The chip shrinks the zone to itself, and a card only opens when it is
- * reached for. Hosts open the card to the chip's **left** ([InfoChipCardOptions]).
+ * Wrap the chip in a [HoverDetailPopup] to give it its card; the chip itself only draws.
  *
- * **It is one of the pill family** ([ActionPill], `StatusPill`): a faint primary tint on a 6 dp
+ * **Why an explicit chip.** A hover zone on the name spans the widest thing on the row, so a
+ * reader scanning a list opens cards they never asked for, which feels intrusive. The chip
+ * shrinks the zone to itself, and a card only opens when it is reached for. Open the card to the
+ * chip's **left** ([InfoChipCardOptions]).
+ *
+ * **It is one of the pill family** ([ActionPill]): a faint primary tint on a 6 dp
  * rounded rectangle, led by a [PillSwatch] with an `i` knocked out — the marker is what says "there
  * is something here", as a `+` or `×` does on an action pill. Primary, like the invitation kinds
  * ([ActionKind.Go]), because it offers more and costs nothing. Hover deepens the tint.
@@ -50,7 +51,7 @@ fun InfoChip(
     kind: InfoChipKind = InfoChipKind.Detail,
     /**
      * Drawn after [text] and never cut: [text] ellipsizes into the room left, this stays whole. For
-     * a count the card holds more of — the Money Movements Why pill's `+1`.
+     * a count the card holds more of, such as the `+1` on a chip that names one of two reasons.
      */
     trailing: String? = null,
 ) {
@@ -86,8 +87,7 @@ fun InfoChip(
  * What an [InfoChip]'s card holds — and so its hue. The behavior is the same for every kind (hover
  * the pill, the card opens; only the pill opens it); the color says what kind of card to expect.
  *
- * - [Detail] — an **item's** canonical detail card: a Balance Sheet row, a collection item. Primary
- *   blue, as it always was.
+ * - [Detail] — an **item's** canonical detail card: a table row, a list item. The theme primary.
  * - [Description] — a **general description** of a control: the paragraph that explains what a
  *   setting does, tucked behind the label that names it instead of standing in the layout. Brand
  *   gold, so it never reads as "this item has a card".

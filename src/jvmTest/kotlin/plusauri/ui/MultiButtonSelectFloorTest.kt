@@ -7,21 +7,16 @@ import org.junit.jupiter.api.Test
 /**
  * [mbsMayToggle] — the `minSelected` floor for a controlled-multi toolbar.
  *
- * The rule lives in [MultiButtonSelect] rather than at a call site on purpose. The Sensitivity
- * panel's two rows first grew a hand-rolled version of it — an `enabledMask` computed by the host
- * plus a bespoke tooltip — which was both a re-implementation of something the control should own
- * and visibly wrong: [ToggleImageButton] fades disabled content to 38%, so the *selected* button
- * holding the floor rendered as though it were off.
+ * The rule lives in [MultiButtonSelect] rather than at a call site on purpose. The obvious
+ * hand-rolled version — an `enabledMask` computed by the host plus a bespoke tooltip — both
+ * re-implements something the control should own and looks wrong: [ToggleImageButton] fades
+ * disabled content to 38%, so the *selected* button holding the floor would render as though it
+ * were off.
  *
  * Refusing the flip, and leaving the button drawn as selected, is what the control does instead.
  *
- * **No production call site passes `minSelected` any more** (as of 2026-09-09). The Bar-height row
- * became pick-one, and the Types row traded the floor for the [MbsBulkControl.AllAndClear] pair —
- * a floor and a Clear button contradict each other, since the controlled-multi `setAll` path does
- * not consult the floor. The rule is kept, and kept tested, because it is the correct behavior for
- * a controlled-multi row that genuinely cannot be empty, and because the hand-rolled version above
- * is what call sites regrow without it. Treat this as coverage for an available guarantee, not for
- * live code.
+ * A floor and an [MbsBulkControl.AllAndClear] pair contradict each other, since the controlled-multi
+ * `setAll` path does not consult the floor; a row that offers Clear should not also set a floor.
  */
 class MultiButtonSelectFloorTest {
 
@@ -54,7 +49,7 @@ class MultiButtonSelectFloorTest {
         )
     }
 
-    /** The floor generalizes past one, even though 1 is the only value any call site has ever used. */
+    /** The floor generalizes past one, even though 1 is the common value. */
     @Test
     fun aFloorOfTwoKeepsTwo() {
         assertFalse(mbsMayToggle(listOf(true, true, false), i = 0, minSelected = 2))

@@ -10,11 +10,11 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * Where a hover card lands — [tipCardOffset], the one placer behind every popup and the canvas
- * card. The popup itself is a separate window the UI tests cannot see into, so the contract is
- * pinned on the placement math — in particular that a [BelowAnchorAtPointer] card **never contains
- * the pointer**, which is the whole reason the collection editors' rows stay clickable while their
- * card is open.
+ * Where a hover card lands: [tipCardOffset], the one placer behind every popup and every
+ * canvas-drawn card. The popup itself is a separate window the UI tests cannot see into, so the
+ * contract is pinned on the placement math, in particular that a [BelowAnchorAtPointer] card
+ * **never contains the pointer**, which is the whole reason a list's rows stay clickable while
+ * their card is open.
  */
 class TipPlacementTest {
 
@@ -140,7 +140,7 @@ class TipPlacementTest {
         assertEquals(0, clamped.x, "no room to the left: pulled back over its own row, never to the far side")
     }
 
-    /** The card an asset row parks: bottom-right of a pair whose right edge is x=1300. */
+    /** Where a left-table row's card parks: bottom-right of a pair of tables ending at x=1300. */
     private val parkedRight = IntRect(left = 980, top = 520, right = 1300, bottom = 700)
 
     @Test

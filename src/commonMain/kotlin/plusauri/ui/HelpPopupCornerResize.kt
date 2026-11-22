@@ -27,9 +27,10 @@ import androidx.compose.ui.unit.dp
 val HelpCornerResizeSize = 28.dp
 
 /**
- * Bottom-right corner grip (same visual language as Bird's Eye dialog resize). Shared with
- * [HelpDialogScaffold] so the inline `?` card and the modal help dialogs are dragged the same way,
- * and with [TooltipCard] for the resizable hover cards ([HoverDetailOptions.resizable]).
+ * Bottom-right corner grip for resizing a panel by dragging. Shared by [ResizableDialog] and by
+ * [TooltipCard] for the resizable hover cards ([HoverDetailOptions.resizable]), so dialogs and
+ * cards are dragged the same way. It reports raw pixel deltas through [onDragPx]; the host applies
+ * them to its own size.
  *
  * The callbacks are read through updated state: the drag detector is installed once, and a host
  * whose callbacks close over per-composition values (a hover card's current size) must not have

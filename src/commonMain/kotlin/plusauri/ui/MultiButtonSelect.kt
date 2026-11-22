@@ -59,15 +59,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Spacer
 
 /*
- * ── House rule: this file is the *only* pick-one control ──────────────────────
+ * ── Kit rule: this file is the *only* pick-one control ────────────────────────
  *
- * Material's `SingleChoiceSegmentedButtonRow` / `SegmentedButton` are **not used in this product**,
- * and the two thin wrappers over them that used to live here were deleted on 2026-08-30 with zero
- * call sites left. Do not add them back and do not import them at a call site: a segmented row is a
- * second toggle vocabulary, and the app already made this move twice (the Brackets headroom rail,
- * the saved-plan view modes) before the rule was written anywhere.
+ * The kit offers no wrapper over Material's `SingleChoiceSegmentedButtonRow` / `SegmentedButton`,
+ * on purpose. A segmented row beside these toggles would be a second toggle vocabulary for the same
+ * job, and a screen that mixes the two looks inconsistent.
  *
- * The house pick-one control is [MultiButtonSelect] in its `buttonSelections` form — [ButtonData] /
+ * The kit's pick-one control is [MultiButtonSelect] in its `buttonSelections` form — [ButtonData] /
  * [ToggleState] over [ToggleImageButton] — driven controlled-single via `selectedIndex` +
  * `onSelectedIndexChange`, with `toolbarOnly = true`, `widthMode = ToggleButtonWidth.Fit` and
  * `buttonSize = MultiButtonSelectDefaults.CompactHeight` for a form or toolbar row.
@@ -85,9 +83,9 @@ enum class ViewSide { Top, Right, Bottom, Left }
  * - **"Which one is open?"** — a legend row keying chart series. Only the *selected* slot needs its
  *   color; an unselected series is not being drawn, so tinting its toggle would claim otherwise.
  *   Pass [selected] alone (the common case, and what [MbsSlotAccent] with no [deselected] gives).
- * - **"What is this slot?"** — the dossier metadata tabs. Errors is red whether or not you are
- *   looking at it, and a reader glancing at the panel should see the severity ladder without first
- *   clicking through it. Pass both.
+ * - **"What is this slot?"** — tabs that sort messages by severity. An Errors tab is red whether
+ *   or not you are looking at it, and a reader glancing at the panel should see the severity ladder
+ *   without first clicking through it. Pass both.
  *
  * [deselected] is rendered dimmer than [selected] (see `ToggleImageButton`), because once every
  * slot carries a color, saturation is no longer available to say which one is open — and if both
@@ -104,23 +102,23 @@ data class MbsSlotAccent(val selected: Color, val deselected: Color? = null)
  * Lives in the control rather than in each host because **[MultiButtonSelect]'s `onToggle` cannot
  * express it**: `onToggle(index)` is a *flip*, so calling it for every index inverts the selection
  * instead of setting it. A host wanting "select all" would have to read its own mask and flip only
- * the off entries — per-call-site logic that then drifts (the cliff radar grew a bespoke "Show all"
- * chip with no "clear" counterpart; the Forecaster chips had neither).
+ * the off entries — per-call-site logic that then drifts, so one screen ends up with a "Show all"
+ * and no "clear", and the next with neither.
  *
  * See [AllAndClear] for why both actions are shown at once rather than one at a time.
  */
 enum class MbsBulkControl {
-    /** No bulk affordance (default — existing call sites are unchanged). */
+    /** No bulk affordance (the default). */
     None,
 
     /**
      * **Both** actions, stacked, each disabled when it would do nothing.
      *
-     * Replaced an earlier single tri-state control that showed "all" while anything was off and
-     * "clear" once everything was on. That was wrong: it assumed exactly one action is available at
-     * a time, which only holds at the two extremes. With 7 of 8 selected both are meaningful, and
-     * the tri-state arbitrarily picked one — so "clear, then pick one" had to route *through* "all",
-     * which does the opposite of what you want and is not discoverable as a stepping stone.
+     * Not a single tri-state control that shows "all" while anything is off and "clear" once
+     * everything is on: that assumes exactly one action is available at a time, which only holds at
+     * the two extremes. With 7 of 8 selected both are meaningful, and a tri-state would pick one
+     * arbitrarily — so "clear, then pick one" would have to route *through* "all", which does the
+     * opposite of what you want and is not discoverable as a stepping stone.
      *
      * Disabling rather than hiding the inapplicable one makes the pair a state read as well as a
      * control: greyed "all" means everything is already on, greyed "clear" means nothing is.
@@ -163,15 +161,15 @@ enum class MbsGroupingConstraint {
  * panel can be showing and there is no single "from → to" to animate.
  */
 enum class MbsPanelTransition {
-    /** The new panel replaces the old one on the next frame (default — every existing call site). */
+    /** The new panel replaces the old one on the next frame (the default). */
     None,
 
     /**
      * The panels slide as a strip laid out in toolbar order: picking a toggle to the **right** of
      * the current one pushes the current panel off to the left and brings the new one in from the
      * right, and the reverse for a toggle to the left. The container height animates with the
-     * content so a taller panel does not pop. Built for [SwitchedCollectionEditor], whose toggles
-     * *are* the panels' names, so the motion says where the reader went.
+     * content so a taller panel does not pop. Suits a switcher whose toggles *are* the panels'
+     * names, so the motion says where the reader went.
      */
     SlideHorizontal,
 }
@@ -185,12 +183,14 @@ enum class MbsPanelTransition {
  *
  * Selection modes:
  * - **Uncontrolled** (default): state owned here from [buttonSelections] initials.
- * - **Controlled ExactlyOne**: pass [selectedIndex] + [onSelectedIndexChange] (e.g. Risk view).
+ * - **Controlled ExactlyOne**: pass [selectedIndex] + [onSelectedIndexChange] (e.g. tabs that
+ *   switch one chart between views).
  * - **Controlled multi-toggle**: pass [selectedMask] + [onToggle] — each index independently
- *   on/off (e.g. Forecast Detail visibility chips). Takes precedence over [selectedIndex].
+ *   on/off (e.g. chips that show or hide a table's row groups). Takes precedence over [selectedIndex].
  *
- * Pastel subsection toolbars (Assumptions, Risk): [equalSlots] = true,
- * [buttonSize] = [SubsectionToolbar.ButtonSize], icons via [subsectionToolbarIcon].
+ * Subsection toolbars (large illustrated icon toggles that switch a panel between its parts):
+ * [equalSlots] = true, [buttonSize] = [SubsectionToolbar.ButtonSize], icons via
+ * [subsectionToolbarIcon].
  *
  * @param buttonSelections  (ButtonData, initial ToggleState) for each button/panel.
  * @param contentMaker      Composable content for panel `i`. Ignored when [toolbarOnly].
@@ -213,19 +213,20 @@ enum class MbsPanelTransition {
  *                          A toolbar on the left or right stacks its buttons as an aligned list, each face
  *                          (selection mark and label) starting at the same edge.
  * @param buttonSize        Side length of each [ToggleImageButton] surface (default 48.dp;
- *                          use [SubsectionToolbar.ButtonSize] for pastel subsection toolbars).
+ *                          use [SubsectionToolbar.ButtonSize] for subsection toolbars).
  * @param selectedIndex     Controlled ExactlyOne index; null = uncontrolled (unless [selectedMask]).
  * @param onSelectedIndexChange  Required when [selectedIndex] is non-null.
  * @param selectedMask      Controlled multi-toggle: `true` = Selected at that index. Same length as
  *                          [buttonSelections]. When non-null, [onToggle] is required.
  * @param onToggle          Flip handler for controlled multi-toggle (index that was clicked).
  * @param toolbarOnly       When true, render only the toggle row/column — no content panels and no
- *                          weight-fill box. Use when the toolbar sits inline (e.g. beside FID·Year).
+ *                          weight-fill box. Use when the toolbar sits inline (e.g. in a header
+ *                          beside other controls).
  * @param fillPanelHeight   Whether the content panel claims the remaining main-axis space.
  *
- *                          True (default) is right inside a **bounded** pane — a Risk chart or the
- *                          Assumptions scroller, where "the rest of the height" is a real quantity
- *                          and the panel should fill it.
+ *                          True (default) is right inside a **bounded** pane — a chart or a
+ *                          scrolling settings area, where "the rest of the height" is a real
+ *                          quantity and the panel should fill it.
  *
  *                          **Pass false when the parent's height is unbounded**, which is what a
  *                          vertically scrolling column offers its children. A weighted child in an
@@ -266,10 +267,10 @@ enum class MbsPanelTransition {
  *                          measure a fixed row of same-width children). Bulk actions trail the
  *                          last wrap item.
  * @param toolbarAlignment  Where a horizontal (Top / Bottom) toolbar sits across the control's
- *                          width — Start by default, as every toolbar has been; Center for a row
- *                          that names two halves of what is below it (the balance-sheet Assets /
- *                          Liabilities switch), where a left-pinned pair reads as a menu rather
- *                          than a divide. Ignored by [toolbarOnly] and the vertical sides.
+ *                          width — Start by default; Center for a row that names two halves of
+ *                          what is below it (an Income / Expenses switch), where a left-pinned
+ *                          pair reads as a menu rather than a divide. Ignored by [toolbarOnly] and
+ *                          the vertical sides.
  * @param panelTransition   How the panel slot moves between selections in controlled-single mode;
  *                          see [MbsPanelTransition]. Ignored when [toolbarOnly] or in the multi
  *                          modes.
@@ -335,7 +336,7 @@ fun MultiButtonSelect(
     onSetAll: ((Boolean) -> Unit)? = null,
     /**
      * `!` on a focused button, in place of this group's own All / Clear decision. For groups that
-     * act as one with a sibling — the Forecast Detail core and tax toolbars, where `!` clears (or
+     * act as one with a sibling — two chip toolbars over the same table, where `!` clears (or
      * fills) both at once. Null = this group alone.
      */
     onBang: (() -> Unit)? = null,
@@ -356,7 +357,10 @@ fun MultiButtonSelect(
      * toolbar passes its own, and should undo itself the same way.
      */
     onOnlyThis: ((Int) -> Unit)? = null,
-    /** Focus the first button when this is requested — how Ctrl-F lands on the chips it opened. */
+    /**
+     * Focus the first button (a single select's selected one) when this is requested — for example
+     * when a host shortcut opens the toolbar and the keyboard should land on it.
+     */
     focusHandoff: FocusHandoff? = null,
     /**
      * Type-to-focus shared with other toolbars that read as one row, this one as [typeAheadSlot].
@@ -605,8 +609,8 @@ fun MultiButtonSelect(
             ToggleImageButton(
                 buttonData = buttonSelections[i].first,
                 state = stateAt(i),
-                // Alt-click is the mouse's Shift-Enter: only this one. Read at the click, as the
-                // seam's Alt-click is ([SeamRegion]), and a plain click where there is no "only".
+                // Alt-click is the mouse's Shift-Enter: only this one. The modifier is read at the
+                // click itself, and a plain click happens where there is no "only".
                 onStateChange = { state ->
                     val only = windowInfo.keyboardModifiers.isAltPressed && onlyThis(i)
                     if (!only) update(i, state)
@@ -639,7 +643,7 @@ fun MultiButtonSelect(
         }
         // Wrapped whenever the toolbar has tips, blank or not ([HoverTooltip] sleeps on a blank one):
         // a tip that comes and goes must not move the button in the tree, or a focused button is
-        // rebuilt and focus drops — a Simulation Summary chip's folded tip did exactly that.
+        // rebuilt and focus drops. A chip whose tip appears only while it is folded would do that.
         if (tips != null) {
             HoverTooltip(text = tip) { button() }
         } else {
@@ -665,25 +669,17 @@ fun MultiButtonSelect(
     fun bulkButton() {
         if (bulkControl == MbsBulkControl.None || buttonSelections.isEmpty()) return
         val labels = bulkLabels!!
-        // Stacked, so the pair costs a narrow column rather than widening the toggle row. Each is
-        // disabled when it would be a no-op, which also makes the pair read as current state.
-        //
-        // Bottom-aligned to the **button surface**, not to the whole toggle column. A square icon
-        // toolbar is surface + indicator + label, so centering against all of that pushed the pair
-        // low enough that reaching Clear felt like a detour downward rather than a move straight
-        // right. Padding the stack down to end exactly where the indicator begins puts it level
-        // with the buttons it acts on. Text-mode toggles are already the same height as the stack,
-        // so the pad computes to zero and nothing moves.
         // Two **thin** [ActionPill]s, stacked. Stacked so the pair costs a narrow column rather
         // than widening the toggle row; thin so the stack is about the height of the toggles it
-        // sits beside instead of half again taller. (They were a bespoke pair of 9sp micro-buttons
-        // — a third small-button vocabulary — before the pill existed.) Each is disabled when it
-        // would be a no-op, which is what lets the pair read as state as well as control.
+        // sits beside instead of half again taller. Each is disabled when it would be a no-op,
+        // which is what lets the pair read as state as well as control.
         //
-        // Centered on the **button surface**, not on the whole toggle column (a square icon
-        // toolbar is surface + indicator + label). The stack is a little taller than a text-mode
-        // toggle, so it is offset rather than padded: the same sliver shows above All as below
-        // Clear, and the row's own height is untouched.
+        // Centered on the **button surface** ([buttonSize]), not on the whole toggle column: a
+        // square icon toolbar is surface + indicator + label, and centering against all of that
+        // would push the pair low enough that reaching Clear feels like a detour downward rather
+        // than a move straight right. The stack is a little taller than a text-mode toggle, so it
+        // is offset rather than padded: the same sliver shows above All as below Clear, and the
+        // row's own height is untouched.
         Column(
             verticalArrangement = Arrangement.spacedBy(ActionPillDefaults.ThinStackGap),
             horizontalAlignment = Alignment.Start,
@@ -708,7 +704,7 @@ fun MultiButtonSelect(
 
     val bareToolbarRow: @Composable () -> Unit = {
         if (wrap) {
-            // Reflow text-width toggles (Guardrails study legend). All/Clear sit just right of
+            // Reflow text-width toggles (a long chart legend). All/Clear sit just right of
             // the chip cluster — not pinned to the panel trailing edge. Cap the FlowRow's max
             // width so chips still wrap, but the Row itself sizes to content (chips + bulk).
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
@@ -772,7 +768,7 @@ fun MultiButtonSelect(
             } else {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(gap),
-                    // Top, so the bulk stack's own top padding decides where it sits (see bulkButton).
+                    // Top, so the bulk stack's own offset decides where it sits (see bulkButton).
                     verticalAlignment = Alignment.Top,
                     modifier = Modifier.wrapContentWidth(),
                 ) {
@@ -802,7 +798,7 @@ fun MultiButtonSelect(
     val toolbarColumn: @Composable () -> Unit = { Box(toolbarKeys, propagateMinConstraints = true) { bareToolbarColumn() } }
 
     if (toolbarOnly) {
-        // Inline toolbars (e.g. Forecast Detail chips next to FID·Year) — no content weight box.
+        // Inline toolbars (e.g. chips in a header beside other controls) — no content weight box.
         Box(modifier) {
             when (buttonBarSide) {
                 ViewSide.Top, ViewSide.Bottom -> toolbarRow()
@@ -834,14 +830,14 @@ fun MultiButtonSelect(
     }
 }
 
-// Weight so panel content can fill remaining height (Risk charts, Assumptions scroll) — unless the
+// Weight so panel content can fill remaining height (a chart, a scrolling pane) — unless the
 // caller says its parent is unbounded, where a weight would measure to zero.
 private fun ColumnScope.panelSlotModifier(fillPanelHeight: Boolean, toolbarAlignment: Alignment.Horizontal): Modifier {
     val height = if (fillPanelHeight) Modifier.weight(1f, fill = true) else Modifier
     return if (toolbarAlignment == Alignment.Start) height else height.fillMaxWidth()
 }
 
-/** Height of the stacked All / Clear pair; used to bottom-align it with the toggle surfaces. */
+/** Height of the stacked All / Clear pair; used to center it on the toggle surfaces. */
 private val BulkStackHeight: Dp = ActionPillDefaults.ThinHeight * 2 + ActionPillDefaults.ThinStackGap
 
 /** Width the wrap layout keeps free for the stacked All / Clear pair beside the chip cluster. */
@@ -938,19 +934,18 @@ private fun EqualWidthToggleColumn(
  * single-source-of-truth idea as [CompactButtonDefaults].
  */
 object MultiButtonSelectDefaults {
-    // ── Text-toggle rows on the tax lenses ───────────────────────────────────
+    // ── Text-toggle rows in a chart's control strip ──────────────────────────
     /**
-     * Height of a text-width ([ToggleButtonWidth.Fit]) toggle in a lens control row — the cliff
-     * radar's lane groups and the Brackets lens's "Room to" row. Height only; width follows the
-     * label.
+     * Height of a text-width ([ToggleButtonWidth.Fit]) toggle in a control row that sits on a chart
+     * card (a "lens" row: the toggles choose what the chart shows, such as which series groups are
+     * drawn). Height only; width follows the label.
      *
-     * Shared so the two lenses, which stack on the same card and are read together, cannot drift
-     * into two chip sizes. It moved here when Brackets swapped its Material segmented row for this
-     * same toggle toolbar.
+     * Shared so that two such rows stacked on the same card, and read together, cannot drift into
+     * two chip sizes.
      */
     val LensToggleHeight: Dp = 26.dp
 
-    /** Gap between toggles inside one lens control row. See [LensToggleHeight]. */
+    /** Gap between toggles inside one chart control row. See [LensToggleHeight]. */
     val LensToggleSlotSpacing: Dp = 6.dp
 
     // ── Compact (desktop / web toolbar) ──────────────────────────────────────
@@ -958,9 +953,9 @@ object MultiButtonSelectDefaults {
     val CompactHorizontalPadding: Dp = 8.dp
     val CompactVerticalPadding: Dp = 2.dp
     /**
-     * Toggle height for desktop/web toolbar rows — the saved-plan view modes, the display-basis
-     * poles, the person editor's Role. Paired with [LocalMinimumInteractiveComponentSize] = 0 so
-     * Material's ~40.dp minimum does not win.
+     * Toggle height for desktop/web toolbar and form rows — a view-mode switch, a two-option choice
+     * in a form. Paired with [LocalMinimumInteractiveComponentSize] = 0 so Material's ~40.dp minimum
+     * does not win.
      */
     val CompactHeight: Dp = 28.dp
 }

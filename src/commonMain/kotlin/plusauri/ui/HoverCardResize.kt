@@ -5,7 +5,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 
 /**
- * The sizes readers have dragged hover cards to, for the life of the app — one slot per **host**
+ * The sizes readers have dragged hover cards to, for the life of the process: one slot per **host**
  * ([HoverDetailOptions.sizeKey], or the options value itself when a host names none).
  *
  * Session-scoped and shared rather than held by each card because a hover card is gone the moment

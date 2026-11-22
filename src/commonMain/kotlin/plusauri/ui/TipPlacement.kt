@@ -22,15 +22,38 @@ import androidx.compose.ui.window.PopupPositionProvider
 import kotlin.math.roundToInt
 
 /**
- * Where a hover card goes, relative to what raised it. **The one placement seam** for every hover
- * tip in the app — Compose popups ([HoverTooltip], [HoverDetailPopup], [OverflowTooltipText], the
- * beam and slider readouts) and the canvas Family A card ([placeTooltipCard]) all resolve their
- * geometry through [tipCardOffset] with one of these.
+ * Where a hover card goes, relative to what raised it. **The one placement point** for every hover
+ * card: the Compose popups ([HoverTooltip], [HoverDetailPopup], [OverflowTooltipText]) and any card
+ * a host draws itself on a chart canvas all resolve their geometry through [tipCardOffset] with one
+ * of these.
+ *
+ * ## Terms used across the hover-card KDoc
+ *
+ * The hover cards fall into three **families**, which share this placer, [TipDepth] and the
+ * paper tokens in `ChartTipTokens.kt`:
+ * - **Family A**: a card the host *draws* on a chart canvas (a readout for the bar or point under
+ *   the pointer). The kit supplies its geometry ([tipCardOffset]), fill and ink ([ChartTipFill],
+ *   [ChartTipInk], [ChartTipBorder]) and depth ([drawTipShadow], [drawTipFace], [drawTipEdge]);
+ *   the host paints it.
+ * - **Family B**: a rich Compose card in a popup, with content the reader may move into to select
+ *   or copy ([HoverDetailPopup], an `interactive` [HoverTooltip]).
+ * - **Family C**: a one-line or short-prose hint in a popup that only names or explains (the string
+ *   [HoverTooltip], [OverflowTooltipText]'s full-text reveal).
+ *
+ * Words for how a card behaves over time:
+ * - **Parked**: the card sits at a fixed corner of the layout and never follows the pointer
+ *   ([Parked]).
+ * - **Latched**: the pointer has stayed still on the anchor long enough ([ChartTipCopyLatchMs])
+ *   that the card stops following it, repaints in the frozen fill ([TipFrozenFill]), and waits for
+ *   the reader to come and copy from it.
+ * - **Flight**: the pointer has left the anchor and is travelling toward its card. While a flight
+ *   is under way the card stays open and the anchors crossed on the way do not open their own
+ *   cards ([HoverFlightState]).
  *
  * Placement is deliberately only *where*. Chrome (frosted or opaque) and timing (intent, close
- * grace, flight) vary independently of it — parked cards are frosted on Bird's Eye and opaque on
- * Help; under-pointer cards are opaque on tables and frosted on the beam — so they stay options
- * on the host ([HoverDetailOptions], [HoverTooltip]'s parameters), not variants here.
+ * grace, flight) vary independently of it: the same placement can be frosted over a chart and
+ * opaque over a table. So those stay options on the host ([HoverDetailOptions], [HoverTooltip]'s
+ * parameters), not variants here.
  */
 sealed interface TipPlacement {
     /**
@@ -42,10 +65,10 @@ sealed interface TipPlacement {
      * above — height decides only when it has to. Above wins over below for an asymmetric reason:
      * with the card's *bottom* edge just over the pointer, every short card sits in the same
      * place, and the one card too tall to fit drops below with its *top* edge just under the
-     * pointer — so the edge nearest the hand barely moves between years, which is the jump that
-     * reads as bouncing. (Below-by-preference kept the top edge fixed instead, but sent every
-     * short card down over the lower plot.) Horizontal: right of the pointer, left when that
-     * would overrun the edge.
+     * pointer. So the edge nearest the hand barely moves from one data point to the next, and that
+     * jump is what reads as bouncing. Preferring below would keep the top edge fixed instead, but
+     * would send every short card down over the lower part of the plot. Horizontal: right of the
+     * pointer, left when that would overrun the edge.
      */
     data object FollowsPointer : TipPlacement
 
@@ -53,7 +76,8 @@ sealed interface TipPlacement {
      * Opens with its top-left a hair up-left of the pointer ([TipPointerInsetPx]) so the card is
      * hovered the instant it opens, then holds. For a card the reader moves *into* — a copy button,
      * a selection. Its cost is that it covers the anchor under the pointer, so a click aimed at the
-     * anchor lands on the card (hosts mirror the click to make that survivable).
+     * anchor lands on the card ([HoverDetailPopup]'s `onClick` mirrors the anchor's click to make
+     * that survivable).
      */
     data object UnderPointer : TipPlacement
 
@@ -70,22 +94,22 @@ sealed interface TipPlacement {
 
     /**
      * Parked: the card's [cardCorner] sits on the corner (window / canvas px) and the card grows
-     * away from it; it never follows the pointer. For a pair of surfaces read together (Bird's
-     * Eye's tables), a readout that must stay out of the swept region (the beam), or a
-     * click-opened panel that covers its own button (help).
+     * away from it; it never follows the pointer. For a pair of tables read side by side, a chart
+     * readout that must stay out of the region the pointer is sweeping, or a click-opened panel
+     * that covers its own button.
      *
      * The corner is **read at placement time** through [cornerAt], never remembered: a corner
-     * captured from an earlier layout goes stale when the same table is shown in another host
-     * (Bird's Eye's modal sits at a different x than its panel), and a stale corner parked the
-     * card over the far side of the window. A host that measures the corner keeps the
-     * `LayoutCoordinates` and reads `boundsInWindow()` inside the lambda. [key] is the placement's
-     * identity for equality (the flight latch keys on it; every row parking in the same corner
-     * shares one): a string naming the corner, or the fixed offset itself.
+     * captured from an earlier layout goes stale when the same table is shown in another host (a
+     * dialog sits at a different x than a side panel), and a stale corner parks the card over the
+     * far side of the window. A host that measures the corner keeps the `LayoutCoordinates` and
+     * reads `boundsInWindow()` inside the lambda. [key] is the placement's identity for equality
+     * (the flight in [HoverFlightState] keys on it; every row parking in the same corner shares
+     * one): a string naming the corner, or the fixed offset itself.
      *
-     * [clampY] false means "do not pull the card back on screen vertically" — the beam's rule: a
-     * card too tall to fit below the plot must be *sized* to the room, because clamping it up
-     * drags it over the bars the pointer is on, which is the one thing parking there exists to
-     * prevent. x is always clamped.
+     * [clampY] false means "do not pull the card back on screen vertically", for a card parked
+     * below a chart: a card too tall to fit below the plot must be *sized* to the room, because
+     * clamping it up drags it over the bars the pointer is on, which is the one thing parking
+     * there exists to prevent. x is always clamped.
      */
     class Parked(
         val cornerAt: () -> IntOffset,
@@ -109,7 +133,7 @@ sealed interface TipPlacement {
  * anchor's trailing edge at the **pointer's y** (its top a hair above the pointer, so it reads as
  * the row's card without covering the row); `alignX` does not apply. It does **not** flip: a card
  * too wide for the room to the right is clamped back over the row it belongs to, because a card
- * that jumped to the far side of the window (over the neighboring table) read as that table's.
+ * that jumped to the far side of the window (over a neighboring table) would read as that table's.
  * The default for a table's row cards ([TableRowCardOptions]): a card just right of the hovered cell
  * stays out of the way of the rows below and is still one short move to reach.
  */
@@ -142,8 +166,8 @@ enum class TipAlignX {
 enum class TipCorner { TopStart, TopEnd, BottomStart, BottomEnd }
 
 /**
- * The clear space between a [TipPlacement.BesideAnchor] card and its anchor. One token: before it,
- * five sites had five gaps (0, 6 px, 6 dp, 8 dp, 10 px), none chosen against another.
+ * The clear space between a [TipPlacement.BesideAnchor] card and its anchor. One token, so every
+ * card sits the same distance from what raised it.
  */
 val TipGap: Dp = 6.dp
 
@@ -154,10 +178,9 @@ val TipGap: Dp = 6.dp
 internal const val TipPointerInsetPx = 12
 
 /**
- * How far beside the pointer a [TipPlacement.FollowsPointer] card's near edge rides. Doubled from
- * the 12 px it shared with [TipPointerInsetPx] (2026-09-20): a card riding that close reads as
- * attached to the cursor, and the extra air is what lets the pinned card's settled chrome read as
- * a change of state rather than a flicker.
+ * How far beside the pointer a [TipPlacement.FollowsPointer] card's near edge rides: twice
+ * [TipPointerInsetPx]. A card riding closer reads as attached to the cursor, and the extra air is
+ * what lets a latched card's settled chrome read as a change of state rather than a flicker.
  */
 internal const val FollowsPointerDxPx = 24
 
@@ -166,9 +189,10 @@ internal const val FollowsPointerDyPx = 8
 
 /**
  * The **"this card is frozen for you"** fill — the one color every hover card takes when it stops
- * following the pointer and waits to be copied from: a canvas card that has pinned (copy plate
- * up), a Compose card that has latched. A cool off-white rather than a wash of the theme primary,
- * so the card reads as *settled* rather than *highlighted*. Change it here and every card follows.
+ * following the pointer and waits to be copied from, whether it is a card drawn on a canvas or a
+ * Compose card (see "latched" on [TipPlacement]). A cool off-white rather than a wash of the theme
+ * primary, so the card reads as *settled* rather than *highlighted*. Change it here and every card
+ * follows.
  *
  * In the dark theme the card stays on its dark surface and is only nudged toward this — a light
  * card would leave the theme's light ink unreadable.
@@ -181,9 +205,9 @@ fun tipFrozenFill(base: Color): Color =
     if (base.luminance() >= 0.5f) TipFrozenFill else lerp(base, TipFrozenFill, 0.12f)
 
 /**
- * The **calendar** wash: the year-label band and its card while the year tip is up, the Bird's Eye
- * axis strip. A faint tint of the theme primary laid *over* whatever is there — a "this hover is
- * about the calendar" cue, distinct from [TipFrozenFill], which says a card has settled.
+ * The **band** wash: a faint tint of the theme primary laid *over* whatever is there, for a strip
+ * (a chart's time axis, say) and its card while that strip's tip is up. It cues "this hover is
+ * about the strip", distinct from [TipFrozenFill], which says a card has settled.
  */
 const val TipBandTintAlpha = 0.10f
 
@@ -196,8 +220,8 @@ fun tipBandTint(): Color = MaterialTheme.colorScheme.primary.copy(alpha = TipBan
 fun tipBandFill(base: Color): Color = lerp(base, MaterialTheme.colorScheme.primary, TipBandTintAlpha)
 
 /**
- * Where a card's top-left goes. Pure — every host's `PopupPositionProvider` and the canvas placer
- * call this, and the tests pin the geometry here without a popup.
+ * Where a card's top-left goes. Pure: every host's `PopupPositionProvider` and any canvas-drawn
+ * card call this, and the tests pin the geometry here without a popup.
  *
  * @param placement    the [TipPlacement].
  * @param anchorBounds the anchor in the space of [bounds] (window px for a popup, canvas px for a
@@ -276,10 +300,10 @@ fun tipCardOffset(
 /**
  * A [PopupPositionProvider] over [tipCardOffset] for a Compose hover card. [placement] is resolved
  * per layout from the anchor's window bounds, so a parked card can pin itself to a corner *of the
- * anchor* (help over its own `?`, the beam below its plate) without the host measuring anything.
- * [pointer] is the anchor-local pointer the host tracks (read on every layout, so it need not be a
- * remember key); [onPlaced] receives the card's window rect when a host needs it (the flight
- * latch in [HoverDetailPopup]).
+ * anchor* (a help panel over its own `?` button, a readout below its chart) without the host
+ * measuring anything. [pointer] is the anchor-local pointer the host tracks (read on every layout,
+ * so it need not be a remember key); [onPlaced] receives the card's window rect when a host needs
+ * it ([HoverDetailPopup] uses it to judge a flight toward the card).
  */
 @Composable
 fun rememberTipPositionProvider(
@@ -313,8 +337,8 @@ fun rememberTipPositionProvider(
  * Whether a pointer that moved [from] → [to] is **closing on** [card]: the move points at the
  * nearest point of the card within ±[ClosingConeCos]'s cone, or has already arrived inside it.
  *
- * The one test every latched card uses to tell "reaching for my card" from "moving on" — the table
- * cards ([HoverFlightState]) and the chart cards (`ChartTipPin`). Judged against the card's
+ * The one test every latched card uses to tell "reaching for my card" from "moving on": the Compose
+ * cards ([HoverFlightState]) and any canvas card a host latches. Judged against the card's
  * **nearest edge**, not its center: a card beside a table row is reached sideways, and a glide
  * straight down the rows beside it is perpendicular to that, so it reads as moving on (each row
  * then raises its own card, as a reader scanning down expects). Judged on a whole displacement,

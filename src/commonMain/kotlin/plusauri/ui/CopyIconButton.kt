@@ -50,19 +50,19 @@ fun trySetClipboardText(clipboard: ClipboardManager, text: String): Boolean =
 
 /**
  * A generic, content-agnostic "Copy" affordance: a compact [IconButton] that writes [textToCopy]
- * to the clipboard and briefly swaps its icon to a check as confirmation. This is the reusable
- * primitive behind the app's "everything is copyable" philosophy (see `doc/philosophies/`) — unlike
- * `TableCopyButton`, it is not coupled to `DataTable`, so any surface (help dialogs, cards, panels)
- * can drop a copy button onto its header row.
+ * to the clipboard and briefly swaps its icon to a check as confirmation. It is not coupled to any
+ * kind of content, so any surface (a help dialog, a card, a table, a side panel) can drop a copy
+ * button onto its header row.
  *
- * Styling deliberately mirrors `TableCopyButton`: a [ToolbarIconButtonSize] cell (min-interactive-size
- * relaxed so it hugs the icon), a [ToolbarPlateIconSize] [LocalCopyGlyph], and the same 1200ms
- * check-swap feedback, so copy affordances read as one family wherever they appear.
+ * It is a [ToolbarPlateIconButton] — a [ToolbarIconButtonSize] cell with the minimum interactive
+ * size relaxed so it hugs the icon — showing [LocalCopyGlyph] at [ToolbarPlateIconSize], with a
+ * 1200 ms check-swap after a copy, so copy buttons read as one family wherever they appear. The
+ * hover tip is [LocalCopyWords]' `hint`.
  *
  * @param textToCopy computed lazily on click, so callers can assemble the payload (often Markdown)
  *   from live state without rebuilding it every recomposition.
- * @param contentColor Unused for the idle branded glyph (fixed pastel palette); kept for API
- *   stability for callers that used to tint Material [ContentCopy] on inverse surfaces.
+ * @param contentColor Currently unused: the idle glyph ([LocalCopyGlyph]) draws in its own colors,
+ *   and the check uses the theme primary.
  */
 @Composable
 fun CopyIconButton(

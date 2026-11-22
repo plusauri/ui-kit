@@ -5,14 +5,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 /**
- * The dossier editors' **two-option choice row** — System | Override, Amount | % of value,
- * No loan | Loan, Pay off by | Pay amount — as one control.
+ * A form's **two-option choice row** — Default | Custom, Amount | Percent, Monthly | Yearly — as one
+ * control.
  *
- * It is [MultiButtonSelect] in its `buttonSelections` form (never Material's segmented buttons —
- * entry-control conventions, Rule 2) at the compact toolbar size, with **checkbox marks**: on a
+ * It is [MultiButtonSelect] in its `buttonSelections` form (the kit's only pick-one control; it
+ * offers no Material segmented buttons) at the compact toolbar size, with **checkbox marks**: on a
  * two-option row there is no odd-one-out, so color alone does not say which side is on, and the
- * box does. Five editors carried this exact parameter list by hand, and the first to add the marks
- * left the other four without them — which is the divergence this wrapper exists to end.
+ * box does. One wrapper keeps every two-option row in a form identical, rather than each call site
+ * repeating this parameter list and drifting.
  *
  * @param first     Label of the left option.
  * @param second    Label of the right option.

@@ -65,20 +65,23 @@ import androidx.compose.material3.Icon
  *  (a rule beside a column/rail). Decides the divider, the pill's long axis, and the caret glyph. */
 enum class CollapseOrientation { Horizontal, Vertical }
 
-/** The grabber pill's length **along** the divider — ~1.2 physical inches, generous enough to find. */
+/** The grabber pill's length **along** the divider: 120 dp, generous enough to find. */
 private val GrabberLong = 120.dp
 
 /**
  * Public face of [GrabberShort], for a parent that has to **reserve** the grabber's width before it
  * can measure anything else.
  *
- * `BirdsEyeBody` is the case: it lays its three panes out with an explicit [androidx.compose.ui.layout.Layout]
- * so the rule can run the full height of the pane, and an explicit layout has to know this width up
- * front rather than discovering it. Asking the parent for `IntrinsicSize.Min` instead is what that
- * code did first, and it crashed the Bird's Eye modal — see the note there.
+ * The case is a row of panes laid out with an explicit [androidx.compose.ui.layout.Layout] so the
+ * rule can run the full height of the row: an explicit layout has to know this width up front
+ * rather than discovering it. Asking the parent for `IntrinsicSize.Min` instead can fail at
+ * runtime when a pane's content does not support intrinsic measurement.
  */
 object CollapseGrabberDefaults {
-    /** Width of a vertical grabber, height of a horizontal one. */
+    /**
+     * Width of a vertical grabber, height of a horizontal one, when it has no [SeamLook]. A grabber
+     * drawn with a look (the seam dividers) is a notch thicker, 16 dp, to hold its caret.
+     */
     val Thickness: Dp get() = GrabberShort
 }
 
@@ -91,30 +94,36 @@ private val GrabberShort = 14.dp
 
 /**
  * A thin divider rule whose middle ~[GrabberLong] section swells into a clickable pill carrying an
- * expand/collapse caret — the app's shared collapse affordance, used both below the global header
- * ([Horizontal][CollapseOrientation.Horizontal]) and beside the Simulator nav rail
+ * expand/collapse caret: a shared collapse affordance, used for example below a window's header
+ * ([Horizontal][CollapseOrientation.Horizontal]) or beside a navigation rail
  * ([Vertical][CollapseOrientation.Vertical]). Clicking toggles [collapsed] via [onToggle]; the caller
  * hides the adjacent region on collapse and the caret flips to point the other way.
  *
  * Caret glyph by orientation:
- *  - Horizontal reuses [ExposedDropdownMenuDefaults.TrailingIcon] (`expanded = !collapsed`) — the same
- *    rotating chevron the app's other collapsibles use (see ResizableCollapsible): points up while the
- *    region is shown ("pull up / hide"), down once hidden ("reveal").
- *  - Vertical uses an auto-mirrored keyboard arrow: points toward the region while it's shown ("push
- *    aside / hide"), away from it once hidden ("reveal") — the sideways analog of the same gesture.
+ *  - Horizontal reuses [ExposedDropdownMenuDefaults.TrailingIcon] (`expanded = !collapsed`), the same
+ *    rotating chevron Material's dropdowns use: points up while the region is shown ("pull up /
+ *    hide"), down once hidden ("reveal"). With a [look], it is a drawn solid triangle instead.
+ *  - Vertical uses a drawn solid triangle that mirrors in right-to-left layouts: points toward the
+ *    region while it's shown ("push aside / hide"), away from it once hidden ("reveal"), the sideways
+ *    analog of the same gesture.
  *
  * @param collapsedLabel a11y click label announced while the region is shown (the click will hide it).
  * @param expandedLabel  a11y click label announced while the region is hidden (the click will show it).
- * @param accentColor    optional state color for the pill (fill, border and caret). Null keeps the
- *                       neutral chrome, which is what every grabber that is only a grabber wants.
+ * @param accentColor    optional state color for the pill's fill and border, and for the horizontal
+ *                       caret (the vertical caret stays `onSurface`; see [CollapseCaret]). Null keeps
+ *                       the neutral chrome, which is what every grabber that is only a grabber wants.
  *                       Pass a color only when the *collapsed region* has something the reader must
- *                       not miss while it is hidden — the dossier metadata panel's error shade is
- *                       the only such case today. A grabber that is always colored is decoration,
- *                       and decoration here would cost the color its meaning everywhere else.
+ *                       not miss while it is hidden, such as an error inside a folded panel. A
+ *                       grabber that is always colored is decoration, and decoration here would cost
+ *                       the color its meaning everywhere else.
  * @param onDrag         non-null makes the whole divider a drag handle across its rule (pixels,
- *                       positive = down / trailing), so one seam can both fold and size its region.
- *                       Null — every chrome divider — keeps it click-only.
+ *                       positive = down / trailing), so one divider can both fold and size its region.
+ *                       Null keeps it click-only.
  * @param onDragStopped  the drag's end, for a caller that commits a size once rather than per frame.
+ * @param look           the seam palette ([seamLook]) that tells the region's state by color and
+ *                       line; null draws the neutral grabber.
+ * @param tooltip        hover tip and a11y name for the pill; null or empty names it by the label.
+ * @param leading        content drawn on the rule left of the pill (a horizontal divider only).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -187,9 +196,10 @@ fun CollapseGrabberDivider(
                 .pointerHoverIcon(PointerIcon.Hand),
             contentAlignment = Alignment.Center,
         ) {
-            // The caret takes the accent through LocalContentColor rather than a tint argument:
-            // TrailingIcon has no color parameter, so tinting only the sideways caret would leave
-            // the two orientations disagreeing about what an accented grabber looks like.
+            // The horizontal caret takes the accent through LocalContentColor rather than a tint
+            // argument, because TrailingIcon has no color parameter. The drawn carets take their
+            // color explicitly: a seam's from its look, the vertical one `onSurface` (see
+            // CollapseCaret for why it does not take the accent).
             CompositionLocalProvider(LocalContentColor provides (accentColor ?: LocalContentColor.current)) {
                 if (look != null && horizontal) {
                     // A seam's pill carries its state in color, and the caret has to be read at a
@@ -271,14 +281,13 @@ private fun CollapseCaret(pointsTrailing: Boolean, color: Color? = null) {
 }
 
 /**
- * The horizontal rule **above a region inside a panel**, as a collapse control — the same grabber
- * language as the four chrome dividers, for content rather than chrome. First use: the loan editor
- * embedded in a Real Asset editor under its *Financed by* toggle, which is most of that editor's
- * height once a mortgage is on it.
+ * The horizontal rule **above a region inside a panel**, as a collapse control: the same grabber
+ * language as the window-level dividers, for content rather than chrome. A typical use is a large
+ * sub-editor nested inside a form, which would otherwise take most of the form's height.
  *
- * Same geometry as [CollapsibleToolsBarDivider] (region *below* its grabber, caret inverted so it
- * points down at the region while shown and up while hidden) with the a11y labels supplied by the
- * caller, since only the caller knows what it is hiding. [accentColor] follows the rule on
+ * The region sits *below* its grabber, so the caret is inverted: it points down at the region while
+ * shown and up while hidden. The a11y labels come from the caller, since only the caller knows what
+ * it is hiding. [accentColor] follows the rule on
  * [CollapseGrabberDivider]: null unless the hidden region holds something the reader must not miss.
  */
 @Composable
@@ -317,13 +326,16 @@ enum class RegionShown { Open, Partial, Closed }
 class SeamLook(val fill: Color, val border: Color, val caret: Color, val rule: Color, val dashed: Boolean)
 
 /**
+ * A *seam* is a divider rule with a grabber pill on it, between a region and what follows it
+ * ([RegionSeamDivider], [SplitSeam], [PanelSeamDivider]).
+ *
  * The seam's palette, one look per [RegionShown] — the state is told by **color and line**, since a
  * caret alone is too small to read at a glance:
  * - **Open**: the brand blue pill on a plain rule — everything is showing, nothing to flag.
  * - **Partial**: the same blue pill on a **dashed** blue rule — the region has been dragged shorter
  *   and scrolls inside; the dashes say "there is more than you see".
  * - **Closed**: a gold pill on a gold rule — something is tucked away here. Gold, not the error
- *   color the chrome grabbers' `accentColor` reserves: a closed row is a choice, not a problem.
+ *   color [CollapseGrabberDivider]'s `accentColor` is for: a closed row is a choice, not a problem.
  */
 @Composable
 fun seamLook(shown: RegionShown): SeamLook {
@@ -354,9 +366,9 @@ fun seamLook(shown: RegionShown): SeamLook {
  * pill-shaped restore button at its end while [RegionShown.Partial]. Hovering the pill names what the
  * click will do ([hideLabel] / [showLabel], also the a11y label).
  *
- * Used by every Forecast Detail row ([ForecastDetailRow], sizable) and by the Forecast Detail control
- * row ([ForecastDetailControlRow], open/closed only). Same geometry as the header's divider (region
- * *above* its grabber), so the caret points up at the region while shown and down while closed.
+ * Suits a stack of resizable rows, such as charts and tables one above another (pass [onDrag]), or a
+ * row that only opens and closes (leave it null). The region sits *above* its grabber, so the caret
+ * points up at the region while shown and down while closed; [regionBelow] flips that.
  */
 @Composable
 fun RegionSeamDivider(
@@ -449,9 +461,9 @@ fun RegionSeamDivider(
 }
 
 /**
- * A **split** between two panes, drawn as a seam: the same rule and pill as [RegionSeamDivider], so
- * the dossier's Bird's Eye | editors split looks like every other grabber. It does not fold — a
- * split has no region to close — so its pill carries a grip rather than a caret.
+ * A **split** between two panes stacked one above the other, drawn as a seam: the same rule and
+ * pill as [RegionSeamDivider], so a split looks like every other grabber. It does not fold — a split
+ * has no region to close — so its pill carries a grip rather than a caret.
  *
  * Drag to move it; or focus the pill (Tab) and ↑ / ↓ move it by [nudge].
  */
@@ -568,7 +580,7 @@ enum class PanelSide { Leading, Trailing }
  *                  the panel should grow**, whichever side it is on. Clamp in the caller.
  * @param onResizeStopped The drag's end, for a caller that keeps the width once rather than per frame.
  * @param accentColor Paints the pill in a warning color instead of the seam's open/folded look, for a panel
- *                  that can hide something the reader must not miss (a plan that contradicts itself). Keep it
+ *                  that can hide something the reader must not miss (a validation error, say). Keep it
  *                  for that: a fold alone is a choice, not a problem.
  */
 @Composable

@@ -76,10 +76,10 @@ val CompactMenuBelowGap: Dp = 2.dp
  *   under the pointer.
  * - [BelowAnchor]: just under the parent; [CompactDropdownMenu.offset] is an extra nudge
  *   (pass [CompactMenuBelowOffset] to clear the trigger by 2 dp).
- * - [EndAnchor]: just past the parent's end (right in LTR) — nav-rail popovers.
+ * - [EndAnchor]: just past the parent's end (right in LTR) — popovers beside a navigation rail.
  * - [AboveAnchor]: just over the parent, bottom edge on the trigger's top; [CompactDropdownMenu.offset]
- *   is an extra nudge (pass [CompactMenuAboveOffset]). For triggers on the window's bottom edge — the
- *   Simulator tools bar — where a menu opened below would be clamped back over its own trigger.
+ *   is an extra nudge (pass [CompactMenuAboveOffset]). For triggers on the window's bottom edge, such
+ *   as a bottom toolbar, where a menu opened below would be clamped back over its own trigger.
  */
 enum class CompactMenuPlacement { AnchorOffset, BelowAnchor, EndAnchor, AboveAnchor }
 
@@ -93,7 +93,7 @@ val CompactMenuAboveOffset: DpOffset = DpOffset(0.dp, -CompactMenuBelowGap)
 val CompactMenuEndOffset: DpOffset = DpOffset(CompactMenuBelowGap, 0.dp)
 
 /**
- * A context menu at this product's density.
+ * A context menu at desktop density.
  *
  * Material's [androidx.compose.material3.DropdownMenu] pads its surface 8 dp top and bottom and
  * gives each item a 48 dp touch-target row. On a menu of one or two short entries that is mostly
@@ -107,11 +107,13 @@ val CompactMenuEndOffset: DpOffset = DpOffset(CompactMenuBelowGap, 0.dp)
  *
  * **Keyboard.** The menu takes focus when it opens, so it works without a pointer: Down / Up move
  * between rows (Ctrl-N / Ctrl-P and Tab / Shift-Tab too — [listKey]), Enter picks the focused row, Esc closes. [onKeyEvent] sees
- * every other key-down first, for a caller's own keys — the Peek menu's letter per entry.
+ * every other key-down first, for a caller's own keys, such as one letter that picks each entry.
  *
  * @param offset from the anchor — click position for [CompactMenuPlacement.AnchorOffset], or an
- *   extra nudge for [CompactMenuPlacement.BelowAnchor].
- * @param placement [CompactMenuPlacement.AnchorOffset] (default) or below the parent trigger.
+ *   extra nudge for the other placements (see [CompactMenuBelowOffset] and its siblings).
+ * @param placement where the menu sits relative to the parent trigger: [CompactMenuPlacement.AnchorOffset]
+ *   (default), [CompactMenuPlacement.BelowAnchor], [CompactMenuPlacement.EndAnchor] or
+ *   [CompactMenuPlacement.AboveAnchor].
  * @param onKeyEvent a caller's own keys, asked before the built-in row navigation; true = consumed.
  */
 @Composable
@@ -128,7 +130,7 @@ fun CompactDropdownMenu(
     val positionProvider = remember(offset, placement, density) {
         CompactMenuPositionProvider(offset, placement, density)
     }
-    // Cap tall catalogues (50 states, growth types) at a slice of the window so the
+    // Cap tall catalogs (a list of countries, say) at a slice of the window so the
     // menu scrolls instead of running off the display. Short lists are unaffected.
     val maxHeight = with(density) {
         (LocalWindowInfo.current.containerSize.height * 0.72f).toDp()
@@ -155,8 +157,8 @@ fun CompactDropdownMenu(
                     if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                     // A key in the menu is keyboard use. On desktop a focused row is drawn only in
                     // keyboard mode, which Compose enters only when its own focus keys (Tab) move
-                    // focus; the steps below move it themselves. After a click, the first Ctrl-N
-                    // or Down moved to a row that showed nothing, until a Tab (owner, 2026-10-14).
+                    // focus; the steps below move it themselves. Without this, after a click the
+                    // first Ctrl-N or Down would move to a row that shows nothing until a Tab.
                     inputModes.requestInputMode(InputMode.Keyboard)
                     if (onKeyEvent?.invoke(event) == true) return@onPreviewKeyEvent true
                     when (event.listKey) {
@@ -181,9 +183,9 @@ fun CompactDropdownMenu(
  * Ask for focus until [hasFocus], once each frame for up to [PopupFocusFrames] frames — how a menu
  * that has just opened takes focus. In a live window a new popup can take more than a frame to be
  * measured and placed, and one request in its first frame finds nothing, so focus stays on whatever
- * opened it: the Peek menu, opened by its shortcut, left focus on its button, and no key reached the
- * menu; a Display level, entered by Enter, left it on the row. The test clock places a popup at
- * once, so a test passes either way — this is the fix for what only the live window shows.
+ * opened it: a menu opened by a keyboard shortcut would leave focus on its button, and no key would
+ * reach the menu. The test clock places a popup at once, so a test passes either way; this is the
+ * fix for what only the live window shows.
  */
 suspend fun FocusRequester.requestFocusOncePlaced(hasFocus: () -> Boolean) {
     repeat(PopupFocusFrames) {
@@ -200,8 +202,9 @@ private const val PopupFocusFrames = 6
  * The plate a [CompactDropdownMenu] draws its rows on — surface, border, and a column as wide as its
  * widest row — without the popup around it.
  *
- * [CompactDropdownMenu] is this inside a [Popup]. A picture of an open menu (a lesson figure, which
- * cannot paint a popup) draws this directly, so the picture is the menu rather than a likeness of it.
+ * [CompactDropdownMenu] is this inside a [Popup]. A picture of an open menu (an offscreen render for
+ * documentation, which cannot paint a popup) draws this directly, so the picture is the menu rather
+ * than a likeness of it.
  *
  * @param modifier applied to the row column, ahead of its padding — the popup's focus and keys.
  */

@@ -20,16 +20,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Where a control's caption sits relative to the control — for [LabeledField] and for
- * [SliderWithNumericInput], which is a labeled field whose content is a slider.
+ * Where a control's caption sits relative to the control: for [LabeledField], and for a host's
+ * slider-with-entry control, which is a labeled field whose content is a slider.
  *
  * Material floating labels sit *inside* the outlined box and get clipped when the field is
  * sized for digits only (compact ages, years, counts). External labels avoid that and keep
- * i18n length from forcing every numeric cell wider.
+ * the length of a translated caption from forcing every numeric cell wider.
  *
- * One enum, not two: until 2026-09-20 the slider had its own `SliderLabelPlacement` naming the
- * same choice, which is the divergence the entry-control conventions exist to stop. [Stacked] is
- * the value that kept them apart — it only means something for a slider row.
+ * One enum serves both plain fields and slider rows, so the same choice has one name everywhere.
+ * [Stacked] is the value only a slider row uses.
  */
 enum class FieldLabelPlacement {
     /** Caption to the left of the control on one row. Default for dense form cells. */
@@ -47,25 +46,25 @@ enum class FieldLabelPlacement {
      *            [ slider··· ]   ← same width as entry
      * ```
      *
-     * [SliderWithNumericInput.trackWidth] (Small / Medium / Large / XLarge) is the single size
-     * knob: it sets both the entry field and the rail. Optional currency sits left of that
-     * matched pair. Prefer this for dense FlowRow knobs (money and percents). A free-standing
-     * [LabeledField] has no rail to stack over, so it draws this as [Start].
+     * The slider control should have a single width setting that sizes both the entry field and
+     * the rail. An optional currency sits left of that matched pair. Prefer this for dense rows of
+     * money and percent sliders. A free-standing [LabeledField] has no rail to stack over, so it
+     * draws this as [Start].
      */
     Stacked,
 }
 
 /**
  * Wraps a control with an **external** caption so field width can follow the value budget
- * (e.g. 2-digit ages) while the label uses full i18n text without clipping.
+ * (e.g. 2-digit ages) while the label shows its full, possibly translated, text without clipping.
  *
- * **This is the house style for dossier write controls** (decided 2026-08-28) — the label sits
- * beside the control, not floating on its border. Pass [label] = null into [IntegerInput] /
- * [NumericInput] / [TightTextField] / [EnumSelect] so Material does not also draw a floating label
- * inside the box. The floating-label slots on those controls stay for the sanctioned exceptions
- * (a labeled *group* box such as `YearCurrencyValueInput`) and for non-dossier surfaces.
+ * **This is the recommended form for form fields:** the label sits beside the control, not
+ * floating on its border. Pass `label = null` into [IntegerInput] / [NumericInput] / [EnumSelect]
+ * so Material does not also draw a floating label inside the box. The floating-label slots on
+ * those controls remain for the exceptions: a labeled *group* of sub-fields read as one value
+ * ([LabeledGroupBox]), and surfaces that prefer Material's floating style.
  *
- * @param label      Visible caption (American English in the base locale; flag+EN for others).
+ * @param label      Visible caption, already localized by the host.
  * @param placement  [FieldLabelPlacement.Start] (default) or [FieldLabelPlacement.Above].
  * @param modifier   Applied to the outer layout.
  * @param content    The field (prefer no internal floating label).
@@ -77,9 +76,9 @@ fun LabeledField(
     placement: FieldLabelPlacement = FieldLabelPlacement.Start,
     /**
      * Gap between caption and control. Null takes the placement's default — 6.dp beside, 2.dp
-     * above. It exists so a control that had already hand-rolled this layout with its own spacing
-     * ([tutil.ui.dossier.PersonSelect]) can adopt the primitive without its call sites shifting;
-     * a new field should leave it null rather than re-deciding the gap per site.
+     * above. It exists so a control that already laid this out by hand with its own spacing can
+     * adopt the primitive without its call sites shifting; a new field should leave it null rather
+     * than re-deciding the gap per site.
      */
     spacing: Dp? = null,
     content: @Composable () -> Unit,
@@ -108,7 +107,7 @@ fun LabeledField(
             ) {
                 caption()
                 // The control learns its own caption, so a field that reports itself out of range
-                // ([InvalidFields]) is named in the Needs row with the words on screen.
+                // ([InvalidFields]) is named by the host's editor with the words on screen.
                 CompositionLocalProvider(LocalFieldCaption provides label, content = content)
             }
         }
@@ -117,7 +116,6 @@ fun LabeledField(
                 modifier = modifier,
                 verticalArrangement = Arrangement.spacedBy(spacing ?: 2.dp),
             ) {
-                // Slight start inset so the caption lines up with outlined field content padding.
                 caption()
                 CompositionLocalProvider(LocalFieldCaption provides label, content = content)
             }
@@ -135,12 +133,11 @@ fun LabeledField(
  * the row above. This is the half-label the reader loses back, sized to a `bodySmall` label's
  * half-height, so the gap they see above the label is the column's own rhythm again.
  *
- * The box owns this rather than leaving it to callers (it was opt-in until 2026-09-11, and 13 of
- * 16 range editors had not opted in), which means a group box first in a column carries it too —
- * a small, uniform inset that is cheaper than one more thing every caller has to remember. A
- * control whose caption sits beside it ([LabeledField]) needs none of this: its label is inside
- * the flow, which is one more reason Rule 1 prefers that form. The gap *below* the label is
- * [GroupBoxLabelClearance].
+ * The box owns this rather than leaving it to callers, because an opt-in is one more thing every
+ * caller has to remember and most forget. That means a group box first in a column carries it
+ * too, a small, uniform inset. A control whose caption sits beside it ([LabeledField]) needs none
+ * of this: its label is inside the flow, which is one more reason to prefer a beside-the-control
+ * label over a floating one. The gap *below* the label is [GroupBoxLabelClearance].
  */
 val FloatingLabelHeadroom: Dp = 8.dp
 
@@ -150,27 +147,24 @@ val FloatingLabelHeadroom: Dp = 8.dp
  * This is the **only** knob that moves that gap, and it is not `contentPadding.top`. Material
  * measures an outlined field's top inset as `max(contentPadding.top, labelHeight / 2)`: the label
  * is centered on the border, so its lower half hangs *inside* the box and any top padding at or
- * under that half-height is absorbed without moving the content at all. Three group boxes used to
- * pass 4dp–7dp there — all inside that dead zone — which is why every one of them drew its first
- * row flush against the label's descenders. [LabeledGroupBox] pads the content instead, *after*
- * the `max()` has already spent the half-label, so this number is the gap a reader actually sees,
- * whatever the label's type size.
+ * under that half-height is absorbed without moving the content at all: a value of 4dp to 7dp
+ * still draws the first row flush against the label's descenders. [LabeledGroupBox] pads the
+ * content instead, *after* the `max()` has already spent the half-label, so this number is the gap
+ * a reader actually sees, whatever the label's type size.
  */
 val GroupBoxLabelClearance: Dp = 8.dp
 
 /**
  * An outlined **group box** — a Material outlined-field frame with a label floating on its top
- * border — around a row or block of related controls. The sanctioned exception to [LabeledField]'s
- * label-beside-the-control rule,
- * for the cases where several sub-fields are read as one value: a year range, a
- * (year, currency, amount) triple.
+ * border — around a row or block of related controls. It is the exception to [LabeledField]'s
+ * label-beside-the-control form, for the cases where several sub-fields are read as one value: a
+ * year range, or an amount with its currency and year.
  *
- * **Every group box in the app goes through here**, which is what makes the framing one decision:
- * the side and bottom insets, and above all the label-to-content clearance
- * ([GroupBoxLabelClearance]) that each hand-rolled `DecorationBox` had been getting wrong on its
- * own, and the headroom above the label ([FloatingLabelHeadroom]) that only three callers had
- * remembered to add. A caller that wants a different frame should change this one, not reach for
- * `OutlinedTextFieldDefaults.DecorationBox` again.
+ * Routing every group box through this one function makes the framing one decision: the side and
+ * bottom insets, and above all the label-to-content clearance ([GroupBoxLabelClearance]) that a
+ * hand-rolled `DecorationBox` easily gets wrong, and the headroom above the label
+ * ([FloatingLabelHeadroom]). Prefer this over calling `OutlinedTextFieldDefaults.DecorationBox`
+ * directly.
  *
  * [label] is a slot rather than a string so a caller can hand it an eliding text
  * (`OverflowTooltipText`) when the label carries more than a name.

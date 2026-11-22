@@ -47,18 +47,20 @@ object CollapsibleSectionDefaults {
     /**
      * Gap between the header bar and the content it reveals.
      *
-     * It lives here because it was living **nowhere**: the bar drew `if (isExpanded) content()`
-     * with no inset at all, so every call site invented its own — `padding(top = 4.dp)` in the two
-     * shaded-body editors (the same block, copy-pasted), `padding(start = 8, top = 8, bottom = 8)`
-     * in the growth editor, and nothing whatsoever in the phase sections, where content sat flush
-     * against the band. Content that touches its own header reads as unowned, and "a bit of space
-     * under a header bar" is not a per-screen decision.
+     * Shared so no call site has to invent its own. Content that touches its own header reads as
+     * unowned, and "a bit of space under a header bar" is not a per-screen decision.
      *
      * Only the gap is shared. A call site that additionally shades or insets its body still owns
-     * that, because a shaded container is a different thing from the seam under the bar.
+     * that, because a shaded container is a different thing from the gap under the bar.
      */
     val ContentPadding: PaddingValues = PaddingValues(top = 8.dp)
 }
+
+/**
+ * Minimum height for an accordion header band: one compact chip plus the row's vertical padding.
+ * Every section header is this tall whether or not it carries a chip or a help affordance.
+ */
+private val CollapsibleHeaderMinHeight: Dp = CompactFilterChipDefaults.Height + 8.dp
 
 /**
  * A header bar that expands/collapses its [content]. Manages its own expanded state.
@@ -77,12 +79,6 @@ object CollapsibleSectionDefaults {
  * @param content           Content shown when expanded.
  */
 @OptIn(ExperimentalMaterial3Api::class)
-/**
- * Minimum height for an accordion header band: one compact chip plus the row's vertical padding.
- * Every section header is this tall whether or not it carries a chip or a help affordance.
- */
-private val CollapsibleHeaderMinHeight: Dp = CompactFilterChipDefaults.Height + 8.dp
-
 @Composable
 fun CollapsibleSection(
     header: String,
@@ -119,6 +115,11 @@ fun CollapsibleSection(
     )
 }
 
+/** The `stateDescription` a [CollapsibleSection]'s toggle announces while open. */
+const val SectionExpanded = "expanded"
+/** The `stateDescription` a [CollapsibleSection]'s toggle announces while closed. */
+const val SectionCollapsed = "collapsed"
+
 /**
  * A header bar that expands/collapses its [content]. Expanded state is driven externally.
  *
@@ -138,11 +139,6 @@ fun CollapsibleSection(
  *                       toggle expand — only the title strip and chevron toggle.
  * @param content        Content shown when expanded.
  */
-/** The `stateDescription` a [CollapsibleSection]'s toggle announces while open. */
-const val SectionExpanded = "expanded"
-/** The `stateDescription` a [CollapsibleSection]'s toggle announces while closed. */
-const val SectionCollapsed = "collapsed"
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CollapsibleSection(
@@ -166,16 +162,15 @@ fun CollapsibleSection(
      * Pushes the chevron to the **right end of the title strip**, next to [headerTrailing], instead
      * of letting it sit immediately after the title text.
      *
-     * Default false keeps every existing bar as it was. It is true where a bar carries a trailing
-     * action and a variable-length title — phase sections, whose headers run from `Phase 3` to
-     * `Phase 1 · Hands off to Medicare in 2041` — because a chevron that lands in a different place
-     * on each row of a stack stops reading as the same control.
+     * Default false. Pass true for a stack of bars with trailing actions and titles of varying
+     * length (`Step 3` above `Step 1 · Review and confirm`), because a chevron that lands in a
+     * different place on each row of a stack stops reading as the same control.
      */
     chevronAtTrailingEdge: Boolean = false,
     /**
      * A **statement** bar: paints the header solid in this color with white ink, in place of
-     * [headerChrome]. For a section whose color *is* information — the balance sheet's asset
-     * blue and liability rose, the same solids Bird's Eye's beam draws — not for decoration.
+     * [headerChrome]. For a section whose color *is* information, such as a category color that
+     * a chart elsewhere on screen also draws, not for decoration.
      */
     headerBarColor: Color? = null,
     /** A [fieldTag] tag on the title + chevron toggle, for UI tests that open sections by identity. */
@@ -288,7 +283,7 @@ fun ControlGroup(
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        // Minimal pad — title-row clusters (#Simulations, FID/Year) should hug the controls.
+        // Minimal pad — a cluster of small inputs on a title row should hug the controls.
         // Horizontal 6 keeps the nest edge clear of the label; vertical 1 avoids a tall empty
         // band once the children themselves are desktop-dense (no 48.dp Material mins).
         Box(Modifier.padding(horizontal = 6.dp, vertical = 1.dp)) {
@@ -301,11 +296,10 @@ fun ControlGroup(
  * Whitespace between stacked collapsible sections, so adjacent bars read as distinct cards rather
  * than one blended block.
  *
- * The bars are rounded [Surface]s; separating them with a hairline divider instead put a straight
- * line between two rounded corners and still left them touching. A gap is what actually reads —
- * which is why [ResizableAccordion] already used one. Shared so the two stacks agree.
+ * The bars are rounded; a hairline divider between them would put a straight line between two
+ * rounded corners and still leave them touching. A gap is what actually reads.
  *
- * [ResizableAccordion] deliberately spaces wider (8.dp): its drag handles live *between* sections,
- * so that gap is an affordance as well as a separator. This one is a plain stack.
+ * This is for a plain stack. A stack with drag handles *between* its sections wants a wider gap
+ * (8 dp), since there the gap is an affordance as well as a separator.
  */
 val CollapsibleStackGap = 4.dp

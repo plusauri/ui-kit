@@ -12,12 +12,13 @@ import androidx.compose.ui.layout.positionInRoot
 
 /**
  * The text fields drawn inside one region, in reading order — so a keyboard move *into* the region
- * lands on its first **field**, not on whatever focusable happens to come first. A Modification
- * editor with a chart preview on top otherwise put the caret on the chart's copy button, and the
- * Enter meant to go back to the list copied the chart instead (owner, 2026-09-27).
+ * lands on its first **field**, not on whatever focusable happens to come first. In an editor with
+ * a chart above its fields, focus would otherwise land on a button in the chart, and the next
+ * Enter would press that button instead of acting on the form.
  *
- * Provide one with [LocalFieldFocusOrder]; the text-entry primitives ([NumericInput],
- * [TightTextField]) join it through [fieldFocusStop].
+ * The host provides one with [LocalFieldFocusOrder] around the region and calls [focusFirst] when
+ * the keyboard moves into it. [NumericInput] (and so [IntegerInput] and [YearInput]) joins it
+ * through [fieldFocusStop]; a host's own text fields can join with the same modifier.
  */
 class FieldFocusOrder {
     internal class Field {

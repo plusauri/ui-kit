@@ -24,14 +24,14 @@ import androidx.compose.ui.unit.dp
  * Shared body for hover tooltips that should be **copyable and select/pasteable** — title row with a
  * [CopyIconButton], optional multi-line [detail], both inside a [SelectionContainer].
  *
- * Used by [CompactSlider] timeline triangles (Forecaster Year + Social Security claim) so both sites
- * get the same expanded-help chrome. Prefer this over a bare string tooltip when the hover is meant
- * to teach, not just name.
+ * One body for every such card (on slider markers, chips, chart points), so they all get the same
+ * expanded-help chrome. Prefer this over a bare string tooltip when the hover is meant to teach,
+ * not just name.
  *
  * Renders inside [TooltipCard] / [HoverTooltip]; does not provide its own surface.
  *
  * [accent] draws a small color swatch ahead of the title, for a card that names something the
- * reader knows by its color — a Key Forecasts row, whose accent bar and distribution marker share it.
+ * reader knows by its color (a chart series, say, whose line and legend share it).
  */
 @Composable
 fun CopyableTooltipBody(
@@ -45,9 +45,10 @@ fun CopyableTooltipBody(
         detail?.takeIf { it.isNotBlank() },
     ).joinToString("\n\n")
 
-    // Selection works inside the tooltip popup; TooltipCard still wraps us, but we lift DisableSelection
-    // only for marker tooltips by rendering selectable content here (popup is not inside a parent
-    // SelectionContainer in the usual slider case). Copy button is the reliable path either way.
+    // Text selection works only when the enclosing card does not disable it: pass
+    // `selectable = true` to [TooltipCard] (an `interactive` [HoverTooltip] does by default). A
+    // [HoverDetailPopup] card disables selection, so there the copy button is the only way out. The
+    // copy button is the reliable path either way.
     SelectionContainer {
         Column(
             modifier = modifier

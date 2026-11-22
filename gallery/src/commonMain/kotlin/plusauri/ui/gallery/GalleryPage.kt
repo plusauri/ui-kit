@@ -24,7 +24,7 @@ class GalleryPage(
 
 /**
  * Every page, in the order the page list shows them. A new kit control joins an existing family's
- * page, or gets a page here, so every control the kit ships can be seen.
+ * page, or gets a page here. A few building blocks and host hooks have no page yet.
  */
 val galleryPages: List<GalleryPage> = listOf(
     // ── Inputs ────────────────────────────────────────────────────────────────

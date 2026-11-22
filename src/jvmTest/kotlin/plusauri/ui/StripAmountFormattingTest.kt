@@ -16,8 +16,8 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 /**
- * A pasted amount arrives as it was copied — `$1,752,700` from a listing site — and [NumericInput]
- * used to reject the whole paste because `,` and `$` fail the numeric-prefix check.
+ * A pasted amount arrives as it was copied, such as `$1,752,700` from a web page, and `,` and `$`
+ * fail the numeric-prefix check, so [NumericInput] strips them before it validates the paste.
  */
 @OptIn(ExperimentalTestApi::class)
 class StripAmountFormattingTest {
@@ -66,7 +66,7 @@ class StripAmountFormattingTest {
 
     @Test
     fun `surrounding spaces and non-breaking spaces are stripped`() {
-        assertEquals("2061.82" to 7, stripAmountFormatting(" $2,061.82 ", 11, allowDecimal = true))
+        assertEquals("2061.82" to 7, stripAmountFormatting(" $2,061.82\u00A0", 11, allowDecimal = true))
     }
 
     @Test

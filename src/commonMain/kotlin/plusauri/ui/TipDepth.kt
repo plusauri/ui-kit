@@ -16,10 +16,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * How much a hover card stands off the page — the **one** configuration for every hover-tip
- * family: canvas chart readouts ([drawChartTooltipChrome]) and Compose cards ([TooltipCardSurface]).
+ * How much a hover card stands off the page: the **one** configuration for every hover-card family
+ * (see [TipPlacement]), both the cards a host draws on a canvas ([drawTipShadow], [drawTipFace],
+ * [drawTipEdge]) and the Compose cards ([TooltipCardSurface]).
  *
- * - [Flat] — the chrome as it was before 2026-09-23: a 1 px border and a single hard drop shadow.
+ * - [Flat] — a 1 px border and a single hard drop shadow.
  * - [Raised] — a little physical depth: a soft, layered shadow that falls further below than to the
  *   side (light from above), a faint top-lit sheen across the fill, and a beveled edge — lighter
  *   along the top, darker along the bottom. Subtle on purpose: a card is paper lifted off the
@@ -28,7 +29,7 @@ import androidx.compose.ui.unit.dp
  * Switch with [HoverTipDepth], the one global value; nothing else reads a depth.
  */
 enum class TipDepth(
-    /** Compose [androidx.compose.material3.Surface] shadow for Family B/C cards. */
+    /** Compose [androidx.compose.material3.Surface] shadow for the Compose cards (Families B and C). */
     internal val composeShadow: Dp,
     /** Top-of-card white wash, as alpha; 0 draws no sheen. */
     internal val sheenAlpha: Float,
@@ -42,10 +43,10 @@ enum class TipDepth(
 }
 
 /**
- * The depth every hover card draws with — **the** global setting, app-wide. Defaults to
- * [TipDepth.Raised]; assign [TipDepth.Flat] for the old flat chrome.
+ * The depth every hover card draws with: **the** global setting, process-wide. Defaults to
+ * [TipDepth.Raised]; assign [TipDepth.Flat] for the flat chrome.
  *
- * Snapshot state rather than a composition local on purpose: the canvas chart tips paint in a
+ * Snapshot state rather than a composition local on purpose: canvas-drawn cards paint in a
  * `DrawScope` that cannot read a local, and a state read there still invalidates the draw — so a
  * change here repaints every open card of every family. A settings toggle can bind to it directly.
  */
@@ -84,9 +85,10 @@ internal fun TipDepth.edgeBrush(edge: Color, top: Float, bottom: Float): Brush =
     }
 
 /**
- * Canvas drop shadow for a card at ([x], [y]) sized [w]×[h]. [Flat] is the historical single hard
- * rect at (+2, +3) in [flatColor]; [Raised] stacks three widening, fainter rects that fall mostly
- * downward, which reads as a soft shadow without a blur pass (a canvas blur is not portable here).
+ * Canvas drop shadow for a card at ([x], [y]) sized [w]×[h]. [TipDepth.Flat] is a single hard
+ * rect at (+2, +3) in [flatColor]; [TipDepth.Raised] stacks three widening, fainter rects that
+ * fall mostly downward, which reads as a soft shadow without a blur pass (a canvas blur is not
+ * portable here).
  */
 fun DrawScope.drawTipShadow(
     depth: TipDepth,
