@@ -53,8 +53,8 @@ dependencyResolutionManagement {
     }
 }
 
-// The repositories above match Tutilis's `kotlin/settings.gradle.kts`, Node / Yarn / Binaryen
-// included: the wasm target needs them, and PREFER_SETTINGS ignores the ones the Kotlin plugin adds.
+// The wasm target needs the Node / Yarn / Binaryen repositories above, and PREFER_SETTINGS ignores
+// the ones the Kotlin plugin would add, so they are declared here.
 rootProject.name = "ui-kit"
 
 // The kit's gallery: a runnable app that shows every control, so the kit can be seen and tried

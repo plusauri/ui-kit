@@ -1,7 +1,7 @@
 @file:OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
 
-// Versions match Tutilis's root build, which takes this build through `includeBuild`: one Kotlin
-// and one Compose across the composite.
+// A host that includes this build from source (`includeBuild`) must use the same Kotlin and
+// Compose versions, since a composite build has one of each.
 plugins {
     kotlin("multiplatform") version "2.3.20"
     id("com.android.library") version "8.6.1"
@@ -10,7 +10,7 @@ plugins {
     // Maven Central: POM, sources and javadoc jars, signing and the Central Portal upload, for
     // every Kotlin Multiplatform target. It applies `maven-publish` itself. 0.34.0 is the newest
     // that runs on this build's Gradle 8.8 and AGP 8.6 (0.35 needs Gradle 8.13, 0.36 AGP 8.13); it
-    // moves when the three repos move Gradle and AGP together.
+    // moves when this build moves Gradle and AGP.
     id("com.vanniktech.maven.publish") version "0.34.0"
 }
 
@@ -28,18 +28,17 @@ android {
 }
 
 /**
- * The general controls, without the product: a later product can depend on this module without
- * the forecast engine, the dossier model, or the reference data.
+ * General Compose controls that any host app can depend on.
  *
  * It depends on Compose and nothing else. A host owns i18n, so a control here takes its strings as
- * parameters or kit words (`KitWords.kt`) and never reads a product's string table.
+ * parameters or kit words (`KitWords.kt`) and never reads a host's string table.
  * `UiKitBoundaryTest` holds both rules.
  */
 kotlin {
     jvm()
     androidTarget {
-        // Android is configured, not shipped, but a host that compiles its own Android target
-        // against the kit needs a variant to resolve.
+        // Published so a host with an Android target can resolve the kit. It is not tested on a
+        // device.
         publishLibraryVariants("release")
     }
     iosSimulatorArm64()

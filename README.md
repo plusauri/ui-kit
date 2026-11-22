@@ -20,7 +20,9 @@ A few controls need words they cannot know, such as what the copy button calls i
 
 ## The rule
 
-The kit depends on Compose and nothing else. A control takes its strings as parameters, or reads a kit word (`KitWords.kt`) that the host provides once; it never reads a product's string table or model. `UiKitBoundaryTest` holds that line.
+The kit depends on Compose and nothing else. A control takes its strings as parameters, or reads a kit word (`KitWords.kt`) that the host provides once; it never reads a host's string table or model. `UiKitBoundaryTest` holds that line: kit and gallery sources may import only the kit, Compose, Kotlin and Java, and the build may add no other dependency.
+
+Number entry is en-US for now: `NumericInput` groups thousands with `,` and a paste drops `,` and `$`.
 
 ## Building
 
@@ -28,9 +30,11 @@ The kit depends on Compose and nothing else. A control takes its strings as para
 ./gradlew jvmTest compileKotlinWasmJs
 ```
 
+That needs only JDK 17 or newer. The full `./gradlew build`, and `publishToMavenLocal`, also need an Android SDK (`ANDROID_HOME`, or `sdk.dir` in `local.properties`), and the iOS targets build only on a Mac with Xcode.
+
 ## The gallery
 
-`gallery/` is a small app with a page for every family of controls, each one live, so the kit can be seen and tried without a host product. Start it with:
+`gallery/` is a small app with a page for each family of the main controls, each one live, so the kit can be seen and tried without a host product. Start it with:
 
 ```
 ./gradlew :gallery:run                              # desktop
@@ -43,7 +47,7 @@ It depends on the kit and Compose only, and it provides the kit words (`KitWords
 
 The kit is published to **Maven Central** as `com.plusauri:ui-kit` (with `ui-kit-jvm`, `ui-kit-wasm-js`, `ui-kit-iosarm64`, `ui-kit-iossimulatorarm64` and `ui-kit-android` beside it). Reading it needs no account and no token: `mavenCentral()` is enough.
 
-Releases up to 0.6.0 also went to GitHub Packages (`https://maven.pkg.github.com/plusauri/ui-kit`), which needed a token to read; that copy is retired. 0.6.0 is the first version on Central. It was built from `48a30ec`, which carries the same code as the commit tagged `v0.6.0` plus the license files and the publishing setup.
+0.6.0 is the first version on Central.
 
 To release:
 
@@ -55,15 +59,8 @@ Running the Release workflow by hand (**Actions → Release → Run workflow**) 
 
 Releases are signed with the key `Plusauri Releases` (fingerprint `1D3AD54F1509F3748C778A7937E2D16D15C4D9F8`, on `keyserver.ubuntu.com`).
 
-`.github/workflows/ci.yml` runs `jvmTest` and `compileKotlinWasmJs` on every push.
-
-## Who uses it
-
-- **Tutilis** names the release it uses in `kotlin/tutil-ui/build.gradle.kts` (`UI_KIT_VERSION`). To work on the kit and Tutilis together, point a Tutilis tree at a kit checkout with `PLUSAURI_UI_KIT_DIR` (or the Gradle property `plusauri.uiKitDir`): the kit then joins Tutilis's build from source (`includeBuild`) in place of the release.
-- **Loquilis** is to depend on the release the same way, never on a Tutilis checkout.
-
-The history before this repo existed is the `kotlin/ui-kit` directory of Tutilis, carried over with `git subtree split`.
+`.github/workflows/ci.yml` runs `jvmTest` and `compileKotlinWasmJs` on every push and pull request.
 
 ## License
 
-MIT; see [LICENSE](LICENSE). The bundled flag font, `src/jvmMain/resources/font/NotoColorEmojiFlags.ttf`, is a subset of Google's Noto Color Emoji under the SIL Open Font License 1.1; its notice is [OFL.txt](src/jvmMain/resources/font/OFL.txt) beside it.
+MIT; see [LICENSE](LICENSE). The bundled flag font, `src/jvmMain/resources/font/NotoColorEmojiFlags.ttf`, is a subset of Google's Noto Color Emoji holding five flags (US, GB, DE, FR and ES), under the SIL Open Font License 1.1; its notice is [OFL.txt](src/jvmMain/resources/font/OFL.txt) beside it.
