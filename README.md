@@ -11,7 +11,7 @@ repositories { mavenCentral() }
 
 kotlin {
     sourceSets {
-        commonMain.dependencies { implementation("com.plusauri:ui-kit:0.6.0") }
+        commonMain.dependencies { implementation("com.plusauri:ui-kit:0.7.0") }
     }
 }
 ```

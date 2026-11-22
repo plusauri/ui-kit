@@ -20,7 +20,7 @@ plugins {
  * then publishes to Maven Central. Raise it in the commit you mean to release.
  */
 group = "com.plusauri"
-version = "0.6.0"
+version = "0.7.0"
 
 android {
     namespace = "com.plusauri.ui.kit"
